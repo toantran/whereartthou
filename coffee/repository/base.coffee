@@ -3,7 +3,7 @@ GLOBAL.DEBUG = true
 mongo = require 'mongodb'
 {Db, ObjectID: ObjectId, Timestamp, Connection, Server} = mongo
 
-dbName = 'wifefoosdb'
+dbName = 'whereartthoudb'
 host = process.env['MONGO_NODE_DRIVER_HOST'] ? 'localhost'
 port = process.env['MONGO_NODE_DRIVER_PORT'] ? Connection.DEFAULT_PORT
 
@@ -52,6 +52,7 @@ exports.getDb = getDb = ->
     m_db.close = ->
       m_db.close = close
       closeDb()
+    m_db
     
   
   
