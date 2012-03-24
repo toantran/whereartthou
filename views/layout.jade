@@ -1,11 +1,10 @@
-
-//  - var loggedIn = (typeof request.session.user !== "undefined")
-//  - var nickname = ''
-//  - if (loggedIn)
-//    - var nickname = request.session.user.nickname || request.session.user.username
-//  - var roles = []
-//  - if (loggedIn)
-//    roles = user.roles || []
+- var loggedIn = (typeof request.session.user !== "undefined")
+- var nickname = ''
+- if (loggedIn)
+  - var nickname = request.session.user.nickname || request.session.user.username
+  - var roles = []
+- if (loggedIn)
+  roles = request.session.user.roles || []
 
   
 !!! 5
@@ -49,22 +48,20 @@ html.nojs
                 a( href="/") Home
               - if (typeof loggedIn != 'undefined' && loggedIn)
                 li
-                  a( href="/team") Map
-                li
-                  a( href="/player") Data
+                  a( href="/data") Data
             ul.nav.pull-right
               - if (typeof loggedIn != 'undefined' && loggedIn)
                 li
                   a.userlink(href='/profile') Welcome, #{nickname}
                 li.divider-vertical
                 li
-                  a(href='/account/logout') Log out
+                  a(href='/logout') Log out
               - else
                 li
-                  a(href='/account/add') Sign up
+                  a(href='/accountadd') Sign up
                 li.divider-vertical
                 li
-                  a(href='/account/login') Log in
+                  a(href='/login') Log in
     .container!= body             
     .footer-wrapper 
       .container Designed and Developed by Toan Tran.  All rights reserved.  Contact toantran@comcast.net
@@ -72,8 +69,8 @@ html.nojs
     script(type='text/javascript', src='/lib/jquery-1.7.1.min.js')
     script(type='text/javascript', src='/lib/jquery-ui-1.8.17.custom.min.js')
     script(type='text/javascript', src='/lib/jquery.li-scroller.1.0.js')
-    script(type='text/javascript', src='/lib/underscore-min.js')
-    script(type='text/javascript', src='/lib/backbone-min.js')
+    //script(type='text/javascript', src='/lib/underscore-min.js')
+    //script(type='text/javascript', src='/lib/backbone-min.js')
     script(type='text/javascript', src='/lib/bootstrap.min.js')  
     script(type='text/javascript', src='/lib/less-1.2.2.min.js')
     script(type='text/javascript', src='/js/layout.js')
