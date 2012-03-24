@@ -1,0 +1,7 @@
+- if (hasMessages)
+  .alert.alert-error
+    a.close(data-dismiss='alert') x
+    h4.alert-heading Error!
+    - var msgs = messages() 
+    each msg in msgs
+      = msg    

@@ -1,0 +1,38 @@
+- var firstname = '', lastname = '', email = '', password = '', confirmpass = '', nickname = '';
+- if (typeof account !== 'undefined')
+  - firstname = account.firstname
+  - lastname = account.lastname
+  - nickname = account.nickname || ''
+  - email = account.username
+  - password = account.password
+  - confirmpass = account.passwordconfirm
+.row
+  .span6.offset3
+    .row
+      .span4
+        form(method='POST')
+          fieldset
+            legend WFL Sign Up
+            .space1
+            label(for='form-signup-nickname') Name (real or nick name)
+            input#form-signup-nickname(maxlength='255', name='nickname', size='25', type='text', required, value=nickname)
+            label(for='form-login-username') Email address
+            input#form-login-username(maxlength='255', name='username', size='25', type='text', required, placeholder='Enter your email address')
+            label(for='form-login-password') Password
+            input#form-login-password(maxlength='16', name='password', size='25', type='password', required, placeholder='Enter your password')
+            label(for='form-login-password-confirm') Confirm Password
+            input#form-login-password-confirm(maxlength='16', name='passwordconfirm', size='25', type='password', required, placeholder='Re-enter your password')
+            .message!= partial('../messages') 
+            button.btn.btn-primary(type='submit') Sign Up
+      .span2
+        .row.space3
+        .row
+          .span2 Already have an account?
+            a(href='/account/login')
+              button.btn.btn-info Log In
+        .row.space1      
+        .row
+          .span Forget your password?
+            a(href='/account/recover')
+              button.btn.btn-info Recover it  
+script(type='text/javascript', src='/js/signup.js')

@@ -1,0 +1,85 @@
+
+//  - var loggedIn = (typeof request.session.user !== "undefined")
+//  - var nickname = ''
+//  - if (loggedIn)
+//    - var nickname = request.session.user.nickname || request.session.user.username
+//  - var roles = []
+//  - if (loggedIn)
+//    roles = user.roles || []
+
+  
+!!! 5
+html.nojs
+  head
+    //if IE
+      meta( http-equiv="X-UA-Compatible", content="IE=edge,chrome=1")
+    meta( http-equiv="Content-Type", content="text/html; charset=utf-8")
+    meta( name="viewport", content="width=device-width, initial-scale=1.0")
+    meta( name='description', content='Web App to see your client location on Google Map')
+    meta( name='author', content='Toan Tran')
+    //if lt IE 9
+      script(src="http://html5shim.googlecode.com/svn/trunk/html5.js")
+    title #{title || 'Where Art Thou'}
+    //link(rel='stylesheet', href='/stylesheets/jquery-ui-1.8.17.custom.css')
+    link( href="/stylesheets/bootstrap.min.css", rel="stylesheet")
+    | <style type="text/css">
+    |   body {
+    |     padding-top: 60px;
+    |     padding-bottom: 40px;
+    |   }
+    | </style>
+    link(rel="stylesheet/less", type="text/css", href="/stylesheets/style.less")
+  body
+    script
+      window.q = [];
+      window.$ = window.jQuery = function(f) {
+        q.push(f);
+      };
+    .navbar.navbar-fixed-top
+      .navbar-inner
+        .container
+          a.btn.btn-navbar( data-toggle="collapse", data-target=".nav-collapse")
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+          a.brand( href="/") Where Art Thou
+          .nav-collapse
+            ul.nav
+              li.active
+                a( href="/") Home
+              - if (typeof loggedIn != 'undefined' && loggedIn)
+                li
+                  a( href="/team") Map
+                li
+                  a( href="/player") Data
+            ul.nav.pull-right
+              - if (typeof loggedIn != 'undefined' && loggedIn)
+                li
+                  a.userlink(href='/profile') Welcome, #{nickname}
+                li.divider-vertical
+                li
+                  a(href='/account/logout') Log out
+              - else
+                li
+                  a(href='/account/add') Sign up
+                li.divider-vertical
+                li
+                  a(href='/account/login') Log in
+    .container!= body             
+    .footer-wrapper 
+      .container Designed and Developed by Toan Tran.  All rights reserved.  Contact toantran@comcast.net
+      
+    script(type='text/javascript', src='/lib/jquery-1.7.1.min.js')
+    script(type='text/javascript', src='/lib/jquery-ui-1.8.17.custom.min.js')
+    script(type='text/javascript', src='/lib/jquery.li-scroller.1.0.js')
+    script(type='text/javascript', src='/lib/underscore-min.js')
+    script(type='text/javascript', src='/lib/backbone-min.js')
+    script(type='text/javascript', src='/lib/bootstrap.min.js')  
+    script(type='text/javascript', src='/lib/less-1.2.2.min.js')
+    script(type='text/javascript', src='/js/layout.js')
+    script(type='text/javascript', src='/js/app.js')
+    script
+      $.each(q,function(index,f){
+        $(f)
+      });
+    
