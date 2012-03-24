@@ -8,8 +8,9 @@
     global = makethis.call();
     global.setActiveMenu(1);
     formsubmit = function() {
-      var formdata, item, _fn, _i, _len, _ref;
+      var form, formdata, item, _fn, _i, _len, _ref;
       formdata = {};
+      form = $(this);
       _ref = $(this).serializeArray();
       _fn = function(item) {
         return formdata[item.name] = item.value;
@@ -19,7 +20,12 @@
         _fn(item);
       }
       $.post('customeradd', formdata).success(function(data) {
-        if (data != null ? data.success : void 0) return console.log('OK');
+        var el, _ref2, _ref3, _ref4;
+        if (data != null ? data.success : void 0) {
+          el = $.el('tr', {}, [$.el('td', {}, [$.el('div.label.label-success', {}, ['new'])]), $.el('td', {}, [data != null ? (_ref2 = data.customer) != null ? _ref2.name : void 0 : void 0]), $.el('td', {}, [data != null ? (_ref3 = data.customer) != null ? _ref3.contact : void 0 : void 0]), $.el('td', {}, [data != null ? (_ref4 = data.customer) != null ? _ref4.address : void 0 : void 0]), $.el('td', {}, ['']), $.el('td', {}, [''])]);
+          $('tbody#customer-list').prepend(el);
+          return $('form#customer-form input').val('');
+        }
       });
       return false;
     };

@@ -6,6 +6,7 @@ jQuery ($) ->
   
   formsubmit = ->
     formdata = {}
+    form = $(@)
     
     for item in $(@).serializeArray()
       do (item) ->
@@ -14,7 +15,18 @@ jQuery ($) ->
     $.post('customeradd', formdata)
     .success (data) ->
       if data?.success
-        console.log 'OK'
+        el = $.el('tr', {}, [
+          $.el('td', {}, [ $.el('div.label.label-success', {}, ['new']) ]),
+          $.el('td', {}, [ data?.customer?.name]),
+          $.el('td', {}, [ data?.customer?.contact]),
+          $.el('td', {}, [ data?.customer?.address]),
+          $.el('td', {}, ['']),
+          $.el('td', {}, [''])
+        ])
+        
+        $('tbody#customer-list').prepend el
+        
+        $('form#customer-form input').val ''
     
     return false
   

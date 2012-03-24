@@ -20,7 +20,7 @@
           td Address
           td Additional Info
           td
-      tbody
+      tbody#customer-list
         - if (typeof customers != 'undefined')
           != partial('customer', customers)
 script(type='text/javascript', src='js/data.js')
