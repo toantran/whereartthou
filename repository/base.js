@@ -8,7 +8,7 @@
 
   Db = mongo.Db, ObjectId = mongo.ObjectID, Timestamp = mongo.Timestamp, Connection = mongo.Connection, Server = mongo.Server;
 
-  dbName = 'wifefoosdb';
+  dbName = 'whereartthoudb';
 
   host = (_ref = process.env['MONGO_NODE_DRIVER_HOST']) != null ? _ref : 'localhost';
 
@@ -65,10 +65,11 @@
         native_parser: false
       });
       close = m_db.close;
-      return m_db.close = function() {
+      m_db.close = function() {
         m_db.close = close;
         return closeDb();
       };
+      return m_db;
     }
   };
 
