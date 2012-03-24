@@ -1,0 +1,60 @@
+@navbar-bgcolor: #1568db;
+@navbar-color: #ffffff;
+@footer-bgcolor: #dedede;
+ 
+.border-radius (@size) {
+  -webkit-border-radius: @size;
+  -moz-border-radius: @size;
+  border-radius: @size;
+}
+
+.navbar-inner {
+  color:#ffffff;
+  background:@navbar-bgcolor;
+  text-shadow:0px -1px 1px #222222;
+}
+
+.navbar-inner:active {
+  cursor:pointer;
+  position:relative;
+}
+
+.navbar .nav .active > a, .navbar .nav .active > a:hover {
+  color: @navbar-color;
+  text-decoration: none;
+  background-color: darken(@navbar-bgcolor, 10%);
+}
+
+.navbar .nav > li > a {
+  color: darken(@navbar-color, 15%);
+}
+
+.footer-wrapper {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 1099;
+  background: @footer-bgcolor;
+  padding: 5px 0 5px 0;
+}
+
+.onerow-height (@rowcount) {
+  height: 20px * @rowcount;
+ }
+
+.space1 {
+  .onerow-height(1);
+}
+
+.space2 {
+  .onerow-height(2);
+}
+
+.space3 {
+  .onerow-height(3);
+}
+
+.clear-float {
+  clear: both;
+}
