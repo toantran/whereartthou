@@ -1,0 +1,26 @@
+.row
+  form#customer-form.form-inline
+    //label Client Name
+    input(type='text', name='customername', placeholder='Client Name', required)
+    //label Contact
+    input(type='text', name='customercontact', placeholder='Contact')
+    //label Address
+    input(type='text', name='customeraddress', placeholder='Address', required)
+    button.btn.btn-primary(type='submit') Save
+.row
+  .label.label-info Clients
+.row
+  .span12
+    table.table.table-striped
+      thead
+        tr
+          td #
+          td Client Name
+          td Contact
+          td Address
+          td Additional Info
+          td
+      tbody
+        - if (typeof customers != 'undefined')
+          != partial('customer', customers)
+script(type='text/javascript', src='js/data.js')

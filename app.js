@@ -71,11 +71,17 @@
     }
   };
 
+  app.get('/data', restrict, routes.data);
+
+  app.get('/customers', restrict, routes.customers);
+
   app.get('/login', routes.login);
 
   app.get('/logout', routes.logout);
 
   app.post('/login', routes.authenticate);
+
+  app.post('/customeradd', restrict, routes.customeradd);
 
   app.get('/', restrict, routes.index);
 

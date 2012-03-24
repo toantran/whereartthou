@@ -1,10 +1,66 @@
-
-/*
-  GET
-  URL  /account/login
-*/
-
 (function() {
+
+  exports.customeradd = function(req, res, next) {
+    var customeraddress, customercontact, customername, customersvc;
+    customersvc = require('../services/customer');
+    customername = req.param('customername', '');
+    customercontact = req.param('customercontact', '');
+    customeraddress = req.param('customeraddress', '');
+    try {
+      return customersvc.add({
+        name: customername,
+        contact: customercontact,
+        address: customeraddress,
+        userid: req.user._id
+      }, function(err, customer) {
+        return res.send({
+          success: !!!err,
+          customer: customer
+        });
+      });
+    } catch (e) {
+      console.trace(e);
+      return next();
+    }
+  };
+
+  exports.data = function(req, res, next) {
+    var customersvc;
+    customersvc = require('../services/customer');
+    try {
+      return customersvc.getAll(req.user._id, '', function(err, customers) {
+        return res.render('data', {
+          title: 'Where Art Thou - Data',
+          customers: customers
+        });
+      });
+    } catch (e) {
+      console.trace(e);
+      return next();
+    }
+  };
+
+  exports.customers = function(req, res, next) {
+    var customersvc, filter;
+    filter = req.param('filter', '');
+    customersvc = require('../services/customer');
+    try {
+      return customersvc.getAll(req.user._id, filter, function(err, customers) {
+        return res.send({
+          success: !!!err,
+          customers: customers
+        });
+      });
+    } catch (e) {
+      console.trace(e);
+      return next();
+    }
+  };
+
+  /*
+    GET
+    URL  /account/login
+  */
 
   exports.login = function(req, res, next) {
     var _ref, _ref2, _ref3, _ref4;
@@ -38,7 +94,7 @@
     var password, returnUrl, userSvc, username;
     req.session.username = username = req.param('username', '');
     req.session.password = password = req.param('password', '');
-    returnUrl = req.param('returnurl', '/account/profile');
+    returnUrl = req.param('returnurl', '/');
     if (!username) {
       req.flash('error', 'Enter Email');
       return res.redirect('back');

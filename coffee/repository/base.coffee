@@ -44,15 +44,13 @@ Return the default DB
 ###    
 exports.getDb = getDb = ->
   m_refcount++
-  if m_db?
-    m_db
-  else
+  if not m_db?
     m_db = new Db dbName, new Server(host, port, {}), native_parser:false
-    close = m_db.close 
-    m_db.close = ->
-      m_db.close = close
-      closeDb()
-    m_db
+  close = m_db.close 
+  m_db.close = ->
+    m_db.close = close
+    closeDb()
+  m_db
     
   
   

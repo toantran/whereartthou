@@ -1,5 +1,50 @@
 
 
+exports.customeradd = (req, res, next) ->
+  customersvc = require '../services/customer'
+  
+  customername = req.param 'customername', ''
+  customercontact = req.param 'customercontact', ''
+  customeraddress = req.param 'customeraddress', ''
+  
+  try
+    customersvc.add {name:customername, contact: customercontact, address:customeraddress, userid: req.user._id}, (err, customer) ->
+      res.send
+        success: !!! (err)
+        customer: customer
+  catch e
+    console.trace e
+    next()
+
+
+exports.data = (req, res, next) ->
+  customersvc = require '../services/customer'
+  
+  try
+    customersvc.getAll req.user._id, '', (err, customers) ->
+      res.render 'data'
+        title: 'Where Art Thou - Data'
+        customers: customers
+  catch e
+    console.trace e
+    next()
+    
+    
+
+exports.customers = (req, res, next) ->
+  filter = req.param 'filter', ''
+  customersvc = require '../services/customer'
+  
+  try
+    customersvc.getAll req.user._id, filter, (err, customers) ->      
+      res.send
+        success: !!! (err)
+        customers: customers
+  catch e
+    console.trace e
+    next()      
+
+
 ###
   GET
   URL  /account/login
@@ -33,7 +78,7 @@ exports.logout = (req, res, next) ->
 exports.authenticate = (req, res, next) ->  
   req.session.username = username = req.param 'username', ''
   req.session.password = password = req.param 'password', ''
-  returnUrl = req.param 'returnurl', '/account/profile'
+  returnUrl = req.param 'returnurl', '/'
 
   if not username
     req.flash 'error', 'Enter Email'

@@ -58,19 +58,17 @@
   exports.getDb = getDb = function() {
     var close;
     m_refcount++;
-    if (m_db != null) {
-      return m_db;
-    } else {
+    if (!(m_db != null)) {
       m_db = new Db(dbName, new Server(host, port, {}), {
         native_parser: false
       });
-      close = m_db.close;
-      m_db.close = function() {
-        m_db.close = close;
-        return closeDb();
-      };
-      return m_db;
     }
+    close = m_db.close;
+    m_db.close = function() {
+      m_db.close = close;
+      return closeDb();
+    };
+    return m_db;
   };
 
   /*
