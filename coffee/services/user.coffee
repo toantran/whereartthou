@@ -1,66 +1,11 @@
 crypto = require 'crypto'
 newUserRepo = require '../repository/users2'
-teamRepo = require '../repository/teams2'
 utils = require './utils'
 
 hash = (msg, key) ->
   crypto.createHmac( 'sha256', key)
   .update(msg)
   .digest('hex')
-
-loadChallenge = (challenge, callback) ->
-  return callback() unless challenge?
-  # load opponent team
-  if challenge.teamid?
-    teamRepo.getSimpleTeam String(challenge.teamid), (err, team) ->
-      challenge.teamname = team?.teamname ? 'Unknown'
-      callback null, challenge
-  else
-    callback null, challenge
-
-# load challenge with opponent team name
-loadChallenges = (challenges, callback) ->
-  return callback(null, challenges) unless challenges? and challenges.length isnt 0
-  utils.map challenges, loadChallenge, callback
-
-# load match with team name
-loadMatch = (hometeamid, m, callback) ->  
-  if m?.teams?.length isnt 0
-    for team in m.teams 
-      if team?._id.equals( hometeamid )
-        m.opponentteamid = team._id
-        m.opponentteamname = team.teamname
-  callback null, m
-  
-# load all matches with team name
-loadMatches = (hometeamid, matches, callback) ->
-  return callback(null, matches) unless matches? and matches.length isnt 0
-  utils.map matches, (m, cb) ->
-    loadMatch hometeamid, m, cb
-  , callback
-
-
-###
-Load user's team with active matches and active challenges
-###
-loadUserTeam = (teamid, callback) ->
-  return callback() unless teamid? and teamid isnt 'undefined'
-  
-  teamRepo.getFullTeam String(teamid), (err, team) ->
-    return callback( err ) if err? or not team?
-    # load full challenge list
-    __loadChallengesFn = (lc_cb) ->
-      loadChallenges team.challenges, (lc_err, challenges) ->
-        team.challenges = challenges unless lc_err?
-        lc_cb err, challenges
-    # load full match list
-    __loadMatchesFn = (lm_cb) ->
-      loadMatches team._id, team.matches, (lm_err, matches) ->
-        team.matches = matches.filter( (am) -> am.end >= new Date() ) unless lm_err?
-        lm_cb err,matches
-        
-    utils.parallel [__loadChallengesFn, __loadMatchesFn], (parallel_err, results) ->
-      callback err, team
 
 
 createEmailContent = (tpl, data) ->
@@ -149,41 +94,6 @@ exports.authenticate = (username, password, callback) ->
       callback null, false
         
 
-
-###
-LOAD a user document with all neccessary properties re-populated in the root object
-###        
-exports.loadMobileUser = (userid, callback = ->) ->
-  console.assert userid, 'userid cannot be null or 0'  
-  throw 'userid is null or empty' unless userid?
-  
-  try
-    newUserRepo.getById userid, (error, user) ->
-      if error
-        callback error
-      else if user
-        # populate property wins
-        user.wins = user.stats?.win ? 0
-        # populate property losses
-        user.losses = user.stats?.loss ? 0
-        # populate challenge count, match count
-        try
-          loadUserTeam user.team?._id, (err, team) ->
-            user.challenges = team?.challenges
-            user.challengeCount = team?.challenges?.length || 0
-            user.matches = team?.matches
-            console.dir user.matches
-            user.matchCount = team?.matches?.length || 0
-            callback null, user
-        catch loadUserTeamEx
-          console.trace loadUserTeamEx
-          callback loadUserTeamEx 
-      else
-        callback null, user
-  catch e
-    console.trace e
-    callback e
-    
 
 ###
 LOAD a user document by Id
@@ -544,7 +454,13 @@ exports.sortingPlayers = (player1, player2) ->
 exports.insert = (user, callback = ->) ->
   console.assert user, 'user cannot be null'  
   throw 'user cannot be null' unless user?
-  
+  console.assert user?.password is user?.passwordconfirm, 'Password do not match'
+  throw 'Passwords do not match' unless user?.password is user?.passwordconfirm
+  console.assert user?.username, 'Email address cannot be null or empty'
+  throw 'Email address cannot be null or empty' unless user?.username
+  console.assert user?.password, 'Password cannot be null or empty'
+  throw 'Password cannot be null or empty' unless user?.password
+    
   utils.execute(newUserRepo.getByUsername, user.username)
   .then (err, existingUser, cb) ->
     if err?
@@ -554,7 +470,6 @@ exports.insert = (user, callback = ->) ->
     else
       user.createdat = new Date()
       user.pictureurl ?= '/images/player.jpg'
-      user.statustext ?= 'Ready for some foos'
       user.password = hash user.password, 'a little dog'
       try 
         newUserRepo.create user, cb
@@ -675,153 +590,7 @@ exports.assignTeam = (userid, team, callback = ->) ->
     newUserRepo.update findObj, updateObj, {}, callback  
   catch e
     console.trace e
-    callback e  
-    
-
-
-###
-take in a brief invite obj and return a full Invite object
-###
-loadFullInvite = (invite, callback = ->) ->
-  teamid = invite?.teamid
-  userid = invite?.invitor
-  
-  try
-    utils.execute( teamRepo.getById, teamid )
-    .then (err, team, cb = ->) ->
-      invite.team = team
-      
-      try
-        newUserRepo.getById userid, cb
-      catch e
-        console.trace e
-        callback e
-    .then (err, user, cb = ->) ->
-      invite.invitor = user
-      callback null, invite
-  catch e
-    console.trace e
-    callback e
-
-###
-GET user object with all full properties
-###    
-exports.getFullUser = (userid, callback = ->) ->
-  console.assert userid, 'userid cannot be null or 0'
-  throw 'userid cannot be null or 0' unless userid
-  
-  utils.execute( newUserRepo.getById, userid )  # load user
-  .then (err, @user, cb = ->) =>
-    # load team
-    return callback( err ) if err
-    
-    if @user?.team?
-      try
-        teamRepo.getById @user?.team?._id, cb
-      catch e
-        console.trace e
-        cb e
-    else 
-      cb()
-  .then (err, @team, cb = ->) =>   
-    # Load posts
-    return callback( err ) if err    
-    @user?.team = @team
-
-    if @user?.posts? and @user?.posts?.length
-      try
-        postGen = require './post'
-        postGen.init()
-        utils.mapAsync @user?.posts, postGen.makePostGen(@user), cb
-      catch e
-        console.trace e
-        cb e
-    else
-      cb null, null
-        
-  .then (err, fullposts, cb = ->) =>    
-    if fullposts?
-      posts = (post for post in fullposts when post?.desc?)
-    else
-      posts = fullposts
-      
-    if posts?
-      posts.sort (p1, p2) ->
-        p2?.createdat - p1?.createdat
-        
-    @user?.posts = posts
-    # Load invites
-    try
-      if @user?.invites and @user?.invites?.length
-        utils.mapAsync @user?.invites, loadFullInvite, cb
-      else
-        cb()
-    catch e
-      console.trace e
-      cb e
-  .then (err, invites, cb = ->) =>
-    return callback( err ) if err
-    
-    @user?.invites = invites
-    
-    # Load challenges
-    if @team?.challenges?.length
-      
-      loadChallenge = (challenge, loadChallengeCallback = ->) ->
-        teamRepo.getById challenge?.teamid, (loadChallengeErr, team) ->
-          challenge.teamname = team?.teamname
-          loadChallengeCallback loadChallengeErr, challenge
-        
-      utils.mapAsync @team?.challenges, loadChallenge, cb           
-    else
-      cb null, null    
-  .then ( err, challenges, cb = ->) =>
-    @team?.challenges = challenges
-    @user?.challenges = challenges
-    allmatches = @team?.matches
-    # Load pending matches
-    matches = (match for match in allmatches when match?.status is 'pending') if allmatches?
-    
-    if matches?.length      
-      matchsvc = require './match'
-      async = require 'async'
-      
-      loadMatch = (am, loadMatchCb = ->) =>
-        matchsvc.getById am._id, (loadMatchErr, fullMatch) =>
-          fullMatch?.hometeam = @team
-          
-          if fullMatch?.teams?
-            for team in fullMatch?.teams
-              do (team) =>
-                if not team?._id?.equals( @team?._id )
-                  fullMatch.opponentteam = team
-
-          if fullMatch?.votes?
-            for vote in fullMatch?.votes
-              do (vote) =>
-                if String(vote?.playerid) is String(@user._id)
-                  fullMatch.voted = true
-                
-            loadVote = (vote, votecb = ->) ->
-              newUserRepo.getById vote.playerid, (getByIdErr, user) ->
-                vote.playername = user?.nickname
-                votecb null, vote
-            
-            async.map fullMatch?.votes, loadVote, (loadVoteErr, fullVotes) ->
-              fullMatch?.votes = fullVotes
-              loadMatchCb loadMatchErr, fullMatch
-          else
-            loadMatchCb loadMatchErr, fullMatch
-        
-      async.map matches, loadMatch, ->
-        cb.apply null, arguments
-      #utils.mapAsync matches, loadMatch, cb
-    else
-      callback null, @user
-  .then ( err, matches, cb = ->) =>
-    @user.matches = matches
-    callback null, @user
-    
+    callback e      
 
     
     

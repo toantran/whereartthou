@@ -1,11 +1,11 @@
 (function() {
-  var Connection, Db, ObjectId, Server, Timestamp, baseDb, baseRepo, checkError, errorHandler, getDb;
+  var Connection, Db, ObjectId, Server, Timestamp, baseDb, baseRepo;
 
   baseDb = require('./base');
 
-  baseRepo = new baseDb.repository('users');
+  baseRepo = new baseDb.Repository('users');
 
-  Db = baseDb.Db, ObjectId = baseDb.ObjectId, Timestamp = baseDb.Timestamp, Connection = baseDb.Connection, Server = baseDb.Server, checkError = baseDb.checkError, errorHandler = baseDb.errorHandler, getDb = baseDb.getDb;
+  Db = baseDb.Db, ObjectId = baseDb.ObjectId, Timestamp = baseDb.Timestamp, Connection = baseDb.Connection, Server = baseDb.Server;
 
   exports.create = function() {
     return baseRepo.create.apply(baseRepo, arguments);
@@ -39,11 +39,9 @@
     return baseRepo.read({
       username: username
     }, function(err, cursor) {
-      var db;
       if (err != null) {
         return callback(err);
       } else if (cursor != null) {
-        db = cursor.db;
         return cursor.toArray(function(toArrayErr, users) {
           if (toArrayErr != null) {
             callback(toArrayErr);
@@ -52,8 +50,7 @@
           } else {
             callback(null, null);
           }
-          cursor.close();
-          return db.close();
+          return cursor.close();
         });
       } else {
         return callback('DB read failed');

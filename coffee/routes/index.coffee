@@ -1,4 +1,38 @@
+exports.accountadd = (req, res, next) ->
+  res.render 'add',
+    layout: true
+    title: 'Where Art Thou - Sign Up'
+    
+    
+exports.createaccount = (req, res, next) ->
+  account = {}
+  account.name = req.param 'companyname', ''
+  account.username = req.param 'username', ''
+  account.password = req.param 'password', ''
+  account.passwordconfirm = req.param 'passwordconfirm' ,''
 
+  userSvc = require '../services/user'
+  try
+    userSvc.insert account, (err, user) ->
+      if err
+          req.flash 'error', err
+          res.redirect 'back'
+        else 
+          # Regenerate session when signing in
+          # to prevent fixation 
+          req.session?.regenerate ->
+            # Store the user's primary key 
+            # in the session store to be retrieved,
+            # or in this case the entire user object
+            req.session.user = user
+            
+            # return to the original url or home page   
+            res.redirect '/'
+  catch e
+    console.trace e
+    req.flash 'error', e
+    res.redirect 'back'
+    
 
 exports.customeradd = (req, res, next) ->
   customersvc = require '../services/customer'
@@ -25,6 +59,7 @@ exports.data = (req, res, next) ->
       res.render 'data'
         title: 'Where Art Thou - Data'
         customers: customers
+        layout: true
   catch e
     console.trace e
     next()
@@ -113,4 +148,5 @@ exports.authenticate = (req, res, next) ->
 exports.index = (req, res) ->
   res.render 'index', 
     title: 'Where Art Thou'
+    layout: true
 

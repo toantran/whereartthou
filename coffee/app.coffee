@@ -55,6 +55,8 @@ restrict = (req, res, next) ->
 
 # Routes
 
+app.get '/accountadd', routes.accountadd
+app.post '/accountadd', routes.createaccount
 app.get '/data', restrict, routes.data
 app.get '/customers', restrict, routes.customers
 app.get '/login', routes.login

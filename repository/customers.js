@@ -1,11 +1,11 @@
 (function() {
-  var Connection, Db, ObjectId, Server, Timestamp, baseDb, baseRepo, checkError, errorHandler, getDb;
+  var Connection, Db, ObjectId, Server, Timestamp, baseDb, baseRepo;
 
   baseDb = require('./base');
 
-  baseRepo = new baseDb.repository('customers');
+  baseRepo = new baseDb.Repository('customers');
 
-  Db = baseDb.Db, ObjectId = baseDb.ObjectId, Timestamp = baseDb.Timestamp, Connection = baseDb.Connection, Server = baseDb.Server, checkError = baseDb.checkError, errorHandler = baseDb.errorHandler, getDb = baseDb.getDb;
+  Db = baseDb.Db, ObjectId = baseDb.ObjectId, Timestamp = baseDb.Timestamp, Connection = baseDb.Connection, Server = baseDb.Server;
 
   exports.create = function() {
     return baseRepo.create.apply(baseRepo, arguments);

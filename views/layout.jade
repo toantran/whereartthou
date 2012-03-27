@@ -1,7 +1,7 @@
 - var loggedIn = (typeof request.session.user !== "undefined")
 - var nickname = ''
 - if (loggedIn)
-  - var nickname = request.session.user.nickname || request.session.user.username
+  - var nickname = request.session.user.name || request.session.user.username
   - var roles = []
 - if (loggedIn)
   roles = request.session.user.roles || []
@@ -18,14 +18,8 @@ html.nojs
     //if lt IE 9
       script(src="http://html5shim.googlecode.com/svn/trunk/html5.js")
     title #{title || 'Where Art Thou'}
-    //link(rel='stylesheet', href='/stylesheets/jquery-ui-1.8.17.custom.css')
     link( href="/stylesheets/bootstrap.min.css", rel="stylesheet")
-    | <style type="text/css">
-    |   body {
-    |     padding-top: 60px;
-    |     padding-bottom: 40px;
-    |   }
-    | </style>
+    link( href="/stylesheets/bootstrap-responsive.min.css", rel="stylesheet")
     link(rel="stylesheet/less", type="text/css", href="/stylesheets/style.less")
   body
     script

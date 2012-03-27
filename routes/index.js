@@ -1,5 +1,40 @@
 (function() {
 
+  exports.accountadd = function(req, res, next) {
+    return res.render('add', {
+      layout: true,
+      title: 'Where Art Thou - Sign Up'
+    });
+  };
+
+  exports.createaccount = function(req, res, next) {
+    var account, userSvc;
+    account = {};
+    account.name = req.param('companyname', '');
+    account.username = req.param('username', '');
+    account.password = req.param('password', '');
+    account.passwordconfirm = req.param('passwordconfirm', '');
+    userSvc = require('../services/user');
+    try {
+      return userSvc.insert(account, function(err, user) {
+        var _ref;
+        if (err) {
+          req.flash('error', err);
+          return res.redirect('back');
+        } else {
+          return (_ref = req.session) != null ? _ref.regenerate(function() {
+            req.session.user = user;
+            return res.redirect('/');
+          }) : void 0;
+        }
+      });
+    } catch (e) {
+      console.trace(e);
+      req.flash('error', e);
+      return res.redirect('back');
+    }
+  };
+
   exports.customeradd = function(req, res, next) {
     var customeraddress, customercontact, customername, customersvc;
     customersvc = require('../services/customer');
@@ -31,7 +66,8 @@
       return customersvc.getAll(req.user._id, '', function(err, customers) {
         return res.render('data', {
           title: 'Where Art Thou - Data',
-          customers: customers
+          customers: customers,
+          layout: true
         });
       });
     } catch (e) {
@@ -124,7 +160,8 @@
 
   exports.index = function(req, res) {
     return res.render('index', {
-      title: 'Where Art Thou'
+      title: 'Where Art Thou',
+      layout: true
     });
   };
 

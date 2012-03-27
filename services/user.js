@@ -1,91 +1,14 @@
 (function() {
-  var createEmailContent, crypto, hash, loadChallenge, loadChallenges, loadFullInvite, loadMatch, loadMatches, loadUserTeam, newUserRepo, teamRepo, utils;
+  var createEmailContent, crypto, hash, newUserRepo, utils;
 
   crypto = require('crypto');
 
   newUserRepo = require('../repository/users2');
 
-  teamRepo = require('../repository/teams2');
-
   utils = require('./utils');
 
   hash = function(msg, key) {
     return crypto.createHmac('sha256', key).update(msg).digest('hex');
-  };
-
-  loadChallenge = function(challenge, callback) {
-    if (challenge == null) return callback();
-    if (challenge.teamid != null) {
-      return teamRepo.getSimpleTeam(String(challenge.teamid), function(err, team) {
-        var _ref;
-        challenge.teamname = (_ref = team != null ? team.teamname : void 0) != null ? _ref : 'Unknown';
-        return callback(null, challenge);
-      });
-    } else {
-      return callback(null, challenge);
-    }
-  };
-
-  loadChallenges = function(challenges, callback) {
-    if (!((challenges != null) && challenges.length !== 0)) {
-      return callback(null, challenges);
-    }
-    return utils.map(challenges, loadChallenge, callback);
-  };
-
-  loadMatch = function(hometeamid, m, callback) {
-    var team, _i, _len, _ref, _ref2;
-    if ((m != null ? (_ref = m.teams) != null ? _ref.length : void 0 : void 0) !== 0) {
-      _ref2 = m.teams;
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        team = _ref2[_i];
-        if (team != null ? team._id.equals(hometeamid) : void 0) {
-          m.opponentteamid = team._id;
-          m.opponentteamname = team.teamname;
-        }
-      }
-    }
-    return callback(null, m);
-  };
-
-  loadMatches = function(hometeamid, matches, callback) {
-    if (!((matches != null) && matches.length !== 0)) {
-      return callback(null, matches);
-    }
-    return utils.map(matches, function(m, cb) {
-      return loadMatch(hometeamid, m, cb);
-    }, callback);
-  };
-
-  /*
-  Load user's team with active matches and active challenges
-  */
-
-  loadUserTeam = function(teamid, callback) {
-    if (!((teamid != null) && teamid !== 'undefined')) return callback();
-    return teamRepo.getFullTeam(String(teamid), function(err, team) {
-      var __loadChallengesFn, __loadMatchesFn;
-      if ((err != null) || !(team != null)) return callback(err);
-      __loadChallengesFn = function(lc_cb) {
-        return loadChallenges(team.challenges, function(lc_err, challenges) {
-          if (lc_err == null) team.challenges = challenges;
-          return lc_cb(err, challenges);
-        });
-      };
-      __loadMatchesFn = function(lm_cb) {
-        return loadMatches(team._id, team.matches, function(lm_err, matches) {
-          if (lm_err == null) {
-            team.matches = matches.filter(function(am) {
-              return am.end >= new Date();
-            });
-          }
-          return lm_cb(err, matches);
-        });
-      };
-      return utils.parallel([__loadChallengesFn, __loadMatchesFn], function(parallel_err, results) {
-        return callback(err, team);
-      });
-    });
   };
 
   createEmailContent = function(tpl, data) {
@@ -194,46 +117,6 @@
         return callback(null, false);
       }
     });
-  };
-
-  /*
-  LOAD a user document with all neccessary properties re-populated in the root object
-  */
-
-  exports.loadMobileUser = function(userid, callback) {
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    try {
-      return newUserRepo.getById(userid, function(error, user) {
-        var _ref, _ref2, _ref3, _ref4, _ref5;
-        if (error) {
-          return callback(error);
-        } else if (user) {
-          user.wins = (_ref = (_ref2 = user.stats) != null ? _ref2.win : void 0) != null ? _ref : 0;
-          user.losses = (_ref3 = (_ref4 = user.stats) != null ? _ref4.loss : void 0) != null ? _ref3 : 0;
-          try {
-            return loadUserTeam((_ref5 = user.team) != null ? _ref5._id : void 0, function(err, team) {
-              var _ref6, _ref7;
-              user.challenges = team != null ? team.challenges : void 0;
-              user.challengeCount = (team != null ? (_ref6 = team.challenges) != null ? _ref6.length : void 0 : void 0) || 0;
-              user.matches = team != null ? team.matches : void 0;
-              console.dir(user.matches);
-              user.matchCount = (team != null ? (_ref7 = team.matches) != null ? _ref7.length : void 0 : void 0) || 0;
-              return callback(null, user);
-            });
-          } catch (loadUserTeamEx) {
-            console.trace(loadUserTeamEx);
-            return callback(loadUserTeamEx);
-          }
-        } else {
-          return callback(null, user);
-        }
-      });
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
   };
 
   /*
@@ -717,6 +600,18 @@
     if (callback == null) callback = function() {};
     console.assert(user, 'user cannot be null');
     if (user == null) throw 'user cannot be null';
+    console.assert((user != null ? user.password : void 0) === (user != null ? user.passwordconfirm : void 0), 'Password do not match');
+    if ((user != null ? user.password : void 0) !== (user != null ? user.passwordconfirm : void 0)) {
+      throw 'Passwords do not match';
+    }
+    console.assert(user != null ? user.username : void 0, 'Email address cannot be null or empty');
+    if (!(user != null ? user.username : void 0)) {
+      throw 'Email address cannot be null or empty';
+    }
+    console.assert(user != null ? user.password : void 0, 'Password cannot be null or empty');
+    if (!(user != null ? user.password : void 0)) {
+      throw 'Password cannot be null or empty';
+    }
     return utils.execute(newUserRepo.getByUsername, user.username).then(function(err, existingUser, cb) {
       if (err != null) {
         return callback(err);
@@ -725,7 +620,6 @@
       } else {
         user.createdat = new Date();
         if (user.pictureurl == null) user.pictureurl = '/images/player.jpg';
-        if (user.statustext == null) user.statustext = 'Ready for some foos';
         user.password = hash(user.password, 'a little dog');
         try {
           return newUserRepo.create(user, cb);
@@ -876,207 +770,6 @@
       console.trace(e);
       return callback(e);
     }
-  };
-
-  /*
-  take in a brief invite obj and return a full Invite object
-  */
-
-  loadFullInvite = function(invite, callback) {
-    var teamid, userid;
-    if (callback == null) callback = function() {};
-    teamid = invite != null ? invite.teamid : void 0;
-    userid = invite != null ? invite.invitor : void 0;
-    try {
-      return utils.execute(teamRepo.getById, teamid).then(function(err, team, cb) {
-        if (cb == null) cb = function() {};
-        invite.team = team;
-        try {
-          return newUserRepo.getById(userid, cb);
-        } catch (e) {
-          console.trace(e);
-          return callback(e);
-        }
-      }).then(function(err, user, cb) {
-        if (cb == null) cb = function() {};
-        invite.invitor = user;
-        return callback(null, invite);
-      });
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  GET user object with all full properties
-  */
-
-  exports.getFullUser = function(userid, callback) {
-    var _this = this;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (!userid) throw 'userid cannot be null or 0';
-    return utils.execute(newUserRepo.getById, userid).then(function(err, user, cb) {
-      var _ref, _ref2, _ref3;
-      _this.user = user;
-      if (cb == null) cb = function() {};
-      if (err) return callback(err);
-      if (((_ref = _this.user) != null ? _ref.team : void 0) != null) {
-        try {
-          return teamRepo.getById((_ref2 = _this.user) != null ? (_ref3 = _ref2.team) != null ? _ref3._id : void 0 : void 0, cb);
-        } catch (e) {
-          console.trace(e);
-          return cb(e);
-        }
-      } else {
-        return cb();
-      }
-    }).then(function(err, team, cb) {
-      var postGen, _ref, _ref2, _ref3, _ref4, _ref5;
-      _this.team = team;
-      if (cb == null) cb = function() {};
-      if (err) return callback(err);
-      if ((_ref = _this.user) != null) _ref.team = _this.team;
-      if ((((_ref2 = _this.user) != null ? _ref2.posts : void 0) != null) && ((_ref3 = _this.user) != null ? (_ref4 = _ref3.posts) != null ? _ref4.length : void 0 : void 0)) {
-        try {
-          postGen = require('./post');
-          postGen.init();
-          return utils.mapAsync((_ref5 = _this.user) != null ? _ref5.posts : void 0, postGen.makePostGen(_this.user), cb);
-        } catch (e) {
-          console.trace(e);
-          return cb(e);
-        }
-      } else {
-        return cb(null, null);
-      }
-    }).then(function(err, fullposts, cb) {
-      var post, posts, _ref, _ref2, _ref3, _ref4, _ref5;
-      if (cb == null) cb = function() {};
-      if (fullposts != null) {
-        posts = (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = fullposts.length; _i < _len; _i++) {
-            post = fullposts[_i];
-            if ((post != null ? post.desc : void 0) != null) _results.push(post);
-          }
-          return _results;
-        })();
-      } else {
-        posts = fullposts;
-      }
-      if (posts != null) {
-        posts.sort(function(p1, p2) {
-          return (p2 != null ? p2.createdat : void 0) - (p1 != null ? p1.createdat : void 0);
-        });
-      }
-      if ((_ref = _this.user) != null) _ref.posts = posts;
-      try {
-        if (((_ref2 = _this.user) != null ? _ref2.invites : void 0) && ((_ref3 = _this.user) != null ? (_ref4 = _ref3.invites) != null ? _ref4.length : void 0 : void 0)) {
-          return utils.mapAsync((_ref5 = _this.user) != null ? _ref5.invites : void 0, loadFullInvite, cb);
-        } else {
-          return cb();
-        }
-      } catch (e) {
-        console.trace(e);
-        return cb(e);
-      }
-    }).then(function(err, invites, cb) {
-      var _ref, _ref2, _ref3, _ref4;
-      if (cb == null) cb = function() {};
-      if (err) return callback(err);
-      if ((_ref = _this.user) != null) _ref.invites = invites;
-      if ((_ref2 = _this.team) != null ? (_ref3 = _ref2.challenges) != null ? _ref3.length : void 0 : void 0) {
-        loadChallenge = function(challenge, loadChallengeCallback) {
-          if (loadChallengeCallback == null) loadChallengeCallback = function() {};
-          return teamRepo.getById(challenge != null ? challenge.teamid : void 0, function(loadChallengeErr, team) {
-            challenge.teamname = team != null ? team.teamname : void 0;
-            return loadChallengeCallback(loadChallengeErr, challenge);
-          });
-        };
-        return utils.mapAsync((_ref4 = _this.team) != null ? _ref4.challenges : void 0, loadChallenge, cb);
-      } else {
-        return cb(null, null);
-      }
-    }).then(function(err, challenges, cb) {
-      var allmatches, async, match, matches, matchsvc, _ref, _ref2, _ref3;
-      if (cb == null) cb = function() {};
-      if ((_ref = _this.team) != null) _ref.challenges = challenges;
-      if ((_ref2 = _this.user) != null) _ref2.challenges = challenges;
-      allmatches = (_ref3 = _this.team) != null ? _ref3.matches : void 0;
-      if (allmatches != null) {
-        matches = (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = allmatches.length; _i < _len; _i++) {
-            match = allmatches[_i];
-            if ((match != null ? match.status : void 0) === 'pending') {
-              _results.push(match);
-            }
-          }
-          return _results;
-        })();
-      }
-      if (matches != null ? matches.length : void 0) {
-        matchsvc = require('./match');
-        async = require('async');
-        loadMatch = function(am, loadMatchCb) {
-          if (loadMatchCb == null) loadMatchCb = function() {};
-          return matchsvc.getById(am._id, function(loadMatchErr, fullMatch) {
-            var loadVote, team, vote, _fn, _fn2, _i, _j, _len, _len2, _ref4, _ref5;
-            if (fullMatch != null) fullMatch.hometeam = _this.team;
-            if ((fullMatch != null ? fullMatch.teams : void 0) != null) {
-              _ref4 = fullMatch != null ? fullMatch.teams : void 0;
-              _fn = function(team) {
-                var _ref5, _ref6;
-                if (!(team != null ? (_ref5 = team._id) != null ? _ref5.equals((_ref6 = _this.team) != null ? _ref6._id : void 0) : void 0 : void 0)) {
-                  return fullMatch.opponentteam = team;
-                }
-              };
-              for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
-                team = _ref4[_i];
-                _fn(team);
-              }
-            }
-            if ((fullMatch != null ? fullMatch.votes : void 0) != null) {
-              _ref5 = fullMatch != null ? fullMatch.votes : void 0;
-              _fn2 = function(vote) {
-                if (String(vote != null ? vote.playerid : void 0) === String(_this.user._id)) {
-                  return fullMatch.voted = true;
-                }
-              };
-              for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-                vote = _ref5[_j];
-                _fn2(vote);
-              }
-              loadVote = function(vote, votecb) {
-                if (votecb == null) votecb = function() {};
-                return newUserRepo.getById(vote.playerid, function(getByIdErr, user) {
-                  vote.playername = user != null ? user.nickname : void 0;
-                  return votecb(null, vote);
-                });
-              };
-              return async.map(fullMatch != null ? fullMatch.votes : void 0, loadVote, function(loadVoteErr, fullVotes) {
-                if (fullMatch != null) fullMatch.votes = fullVotes;
-                return loadMatchCb(loadMatchErr, fullMatch);
-              });
-            } else {
-              return loadMatchCb(loadMatchErr, fullMatch);
-            }
-          });
-        };
-        return async.map(matches, loadMatch, function() {
-          return cb.apply(null, arguments);
-        });
-      } else {
-        return callback(null, _this.user);
-      }
-    }).then(function(err, matches, cb) {
-      if (cb == null) cb = function() {};
-      _this.user.matches = matches;
-      return callback(null, _this.user);
-    });
   };
 
 }).call(this);
