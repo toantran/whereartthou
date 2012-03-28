@@ -55,6 +55,7 @@ restrict = (req, res, next) ->
 
 # Routes
 
+app.get '/defloc', restrict, routes.defaultLocation
 app.get '/accountadd', routes.accountadd
 app.post '/accountadd', routes.createaccount
 app.get '/data', restrict, routes.data

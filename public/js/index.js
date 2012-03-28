@@ -1,14 +1,18 @@
 (function() {
 
   jQuery(function($) {
-    var buildDetailInfo, createMarker, displayCustomer, initialize, loadCustomers, popLatLong;
+    var buildDetailInfo, clearGrid, clearMarkers, createMarker, displayCustomer, displayCustomers, highlightCustomerLocation, initialize, loadCustomers, loadDefaultLocation, onMapLoad, onclientrowclick, popLatLong, showInGrid;
     buildDetailInfo = function(customer) {
       var contentString;
       return contentString = '<div class="alert alert-info">' + '<div>' + '<strong>Name: </strong>' + (customer != null ? customer.name : void 0) + '</div>' + '<div>' + '<strong>Contact: </strong>' + (customer != null ? customer.contact : void 0) + '</div>' + '<div>' + '<strong>Address: </strong>' + (customer != null ? customer.address : void 0) + '</div>' + '</div>';
     };
     popLatLong = function(customer, callback) {
+      var _ref, _ref2;
       if (callback == null) callback = function() {};
       if ((customer != null ? customer.latlng : void 0) != null) {
+        return callback(customer);
+      } else if ((customer != null ? customer.location : void 0) != null) {
+        customer.latlng = new google.maps.LatLng(customer != null ? (_ref = customer.location) != null ? _ref.lat : void 0 : void 0, customer != null ? (_ref2 = customer.location) != null ? _ref2.lng : void 0 : void 0, true);
         return callback(customer);
       } else if (((customer != null ? customer.lat : void 0) != null) && ((customer != null ? customer.lng : void 0) != null)) {
         customer.latlng = new google.maps.LatLng(customer != null ? customer.lat : void 0, customer != null ? customer.lng : void 0, true);
@@ -32,36 +36,89 @@
           map: map,
           position: customer != null ? customer.latlng : void 0,
           title: customer.name,
-          visible: true
+          visible: true,
+          icon: this.icon
         });
         contentString = buildDetailInfo(customer);
-        return google.maps.event.addListener(marker, 'click', function(e) {
+        google.maps.event.addListener(marker, 'click', function(e) {
           var _ref, _ref2;
           if ((_ref = _this.infoWindow) != null) _ref.close();
           if ((_ref2 = _this.infoWindow) != null) _ref2.setContent(contentString);
           return _this.infoWindow.open(map, marker);
         });
+        return marker;
       }
     };
+    showInGrid = function(customer) {
+      var el;
+      el = $.el('tr.client-row', {
+        customerid: customer._id
+      }, [$.el('td', {}, [$.el('div.client-name', {}, [customer != null ? customer.name : void 0]), $.el('div.client-address', {}, [customer != null ? customer.address : void 0])])]);
+      return $('.clientlist-container tbody').append(el);
+    };
     displayCustomer = function(customer) {
+      var _this = this;
       return popLatLong(customer, function(cust) {
         var marker;
-        return marker = createMarker(cust, this.map);
+        marker = createMarker(cust, _this.map);
+        if (cust != null) cust.marker = marker;
+        return showInGrid(cust);
       });
     };
+    displayCustomers = function(customers) {
+      var customer, _i, _len, _results;
+      if (customers != null ? customers.length : void 0) {
+        _results = [];
+        for (_i = 0, _len = customers.length; _i < _len; _i++) {
+          customer = customers[_i];
+          _results.push(displayCustomer(customer));
+        }
+        return _results;
+      }
+    };
+    clearMarkers = function() {
+      var customer, _i, _len, _ref, _ref2, _results;
+      if ((_ref = this.customers) != null ? _ref.length : void 0) {
+        _ref2 = this.customers;
+        _results = [];
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          customer = _ref2[_i];
+          _results.push((function(customer) {
+            if (customer != null ? customer.marker : void 0) {
+              return customer != null ? customer.marker.setMap(null) : void 0;
+            }
+          })(customer));
+        }
+        return _results;
+      }
+    };
+    clearGrid = function() {
+      return $('.clientlist-container tbody').empty();
+    };
     loadCustomers = function() {
+      var _this = this;
       return $.get('customers').success(function(data) {
-        var customer, _i, _len, _ref, _results;
         if (data != null ? data.success : void 0) {
-          _ref = data != null ? data.customers : void 0;
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            customer = _ref[_i];
-            _results.push(displayCustomer(customer));
-          }
-          return _results;
+          clearMarkers();
+          clearGrid();
+          _this.customers = data != null ? data.customers : void 0;
+          return displayCustomers(_this.customers);
         }
       });
+    };
+    loadDefaultLocation = function() {
+      var _this = this;
+      return $.get('/defloc').success(function(data) {
+        var loc, _ref, _ref2;
+        if ((data != null ? data.success : void 0) && (data != null ? data.location : void 0)) {
+          loc = new google.maps.LatLng(data != null ? (_ref = data.location) != null ? _ref.lat : void 0 : void 0, data != null ? (_ref2 = data.location) != null ? _ref2.lng : void 0 : void 0);
+          return _this.map.setCenter(loc);
+        }
+      });
+    };
+    onMapLoad = function() {
+      loadDefaultLocation();
+      return loadCustomers();
     };
     initialize = function() {
       var mapOptions;
@@ -72,10 +129,49 @@
       };
       this.map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
       this.geo = new google.maps.Geocoder();
+      this.icon = new google.maps.MarkerImage('/images/mapslt.png', new google.maps.Size(9, 9), new google.maps.Point(138, 227));
+      this.hlicon = new google.maps.MarkerImage('/images/m3.png');
       this.infoWindow = new google.maps.InfoWindow();
-      return google.maps.event.addListener(this.map, 'tilesloaded', loadCustomers);
+      loadDefaultLocation();
+      return loadCustomers();
     };
-    return initialize();
+    initialize();
+    highlightCustomerLocation = function(id) {
+      var customer, icon, map, _i, _len, _ref, _ref2, _results,
+        _this = this;
+      icon = this.icon;
+      map = this.map;
+      if ((_ref = this.customers) != null ? _ref.length : void 0) {
+        _ref2 = this.customers;
+        _results = [];
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          customer = _ref2[_i];
+          if (customer._id === id) {
+            _results.push((function(customer) {
+              var marker;
+              marker = customer != null ? customer.marker : void 0;
+              if (marker != null) {
+                return map.setCenter(marker.getPosition());
+                /*
+                            window.setTimeout =>
+                              console.log icon
+                              marker.setIcon icon
+                              marker.setVisible true
+                            , 1000
+                */
+              }
+            })(customer));
+          }
+        }
+        return _results;
+      }
+    };
+    onclientrowclick = function(e) {
+      var customerid;
+      customerid = $(e.target).closest('tr.client-row').attr('customerid');
+      return highlightCustomerLocation(customerid);
+    };
+    return $('.clientlist-container').on('click', onclientrowclick);
   });
 
 }).call(this);

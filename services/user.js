@@ -1,5 +1,5 @@
 (function() {
-  var createEmailContent, crypto, hash, newUserRepo, utils;
+  var createEmailContent, crypto, hash, newUserRepo, updateLocation, utils;
 
   crypto = require('crypto');
 
@@ -55,49 +55,6 @@
   };
 
   /*
-  */
-
-  exports.getrecords = function(userid, callback) {
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    try {
-      return utils.execute(newUserRepo.getById, userid).then(function(err, user, cb) {
-        var teamsvc, _ref;
-        if (cb == null) cb = function() {};
-        if (err) return callback(err);
-        if (user != null ? (_ref = user.records) != null ? _ref.length : void 0 : void 0) {
-          teamsvc = require('./team');
-          return utils.mapAsync(user != null ? user.records : void 0, function(rec, iteratorcb) {
-            var _ref2, _ref3, _ref4;
-            if (iteratorcb == null) iteratorcb = function() {};
-            if (rec != null) {
-              rec.result = (rec != null ? (_ref2 = rec.data) != null ? _ref2.result : void 0 : void 0) === 'win' ? 'W' : 'L';
-            }
-            if (rec != null) {
-              rec.teamid = rec != null ? (_ref3 = rec.data) != null ? _ref3.opponentid : void 0 : void 0;
-            }
-            return teamsvc.getById(rec != null ? (_ref4 = rec.data) != null ? _ref4.opponentid : void 0 : void 0, function(getteamerr, team) {
-              if (rec != null) {
-                rec.teamname = team != null ? team.teamname : void 0;
-              }
-              return iteratorcb(getteamerr, rec);
-            });
-          }, cb);
-        } else {
-          return cb();
-        }
-      }).then(function(err, recs, cb) {
-        if (cb == null) cb = function() {};
-        return callback(err, recs);
-      });
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
   Authenticate a user login
   */
 
@@ -136,121 +93,6 @@
   };
 
   /*
-  Update player's stats
-  */
-
-  exports.resetStats = function(userid, callback) {
-    var findObj, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    findObj = {
-      _id: userid
-    };
-    updateObj = {
-      $unset: {
-        stats: 1,
-        records: 1
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Update player's stats
-  */
-
-  exports.updateStats = function(userid, opponentid, win, callback) {
-    var findObj, incObj, statLog, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof opponentid !== 'string') opponentid = String(opponentid);
-    findObj = {
-      _id: userid
-    };
-    incObj = win ? {
-      'stats.win': 1
-    } : {
-      'stats.loss': 1
-    };
-    statLog = {
-      id: new newUserRepo.ObjectId(),
-      type: 'matchresult',
-      data: {
-        opponentid: opponentid,
-        result: win ? 'win' : 'lose'
-      },
-      createdat: new Date()
-    };
-    updateObj = {
-      $inc: incObj,
-      $set: {
-        updatedat: new Date()
-      },
-      $addToSet: {
-        posts: statLog,
-        records: statLog
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Update player's stats.  Silently
-  */
-
-  exports.updateStatsSilent = function(userid, opponentid, win, callback) {
-    var findObj, incObj, statLog, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof opponentid !== 'string') opponentid = String(opponentid);
-    findObj = {
-      _id: userid
-    };
-    incObj = win ? {
-      'stats.win': 1
-    } : {
-      'stats.loss': 1
-    };
-    statLog = {
-      id: new newUserRepo.ObjectId(),
-      type: 'matchresult',
-      data: {
-        opponentid: opponentid,
-        result: win ? 'win' : 'lose'
-      },
-      createdat: new Date()
-    };
-    updateObj = {
-      $inc: incObj,
-      $addToSet: {
-        records: statLog
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
   Update player's picture
   */
 
@@ -277,326 +119,32 @@
     }
   };
 
-  /*
-  Add a vote record into player's record
-  */
-
-  exports.addVote = function(userid, vote, callback) {
-    var findObj, logObj, updateObj;
+  exports.updateLocation = updateLocation = function(user, callback) {
+    var geocoder;
     if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    findObj = {
-      _id: userid
-    };
-    logObj = {
-      type: 'matchresult',
-      data: {
-        matchid: vote.matchid,
-        teamid: vote.teamid
-      },
-      createdat: new Date()
-    };
-    updateObj = {
-      $set: {
-        updatedat: new Date()
-      },
-      $addToSet: {
-        votes: vote,
-        logs: logObj
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Set a team to a player
-  */
-
-  exports.setTeam = function(userid, team, callback) {
-    var findObj, post, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    findObj = {
-      _id: userid
-    };
-    post = {
-      id: new newUserRepo.ObjectId(),
-      type: 'jointeam',
-      data: {
-        teamid: String(team._id)
-      },
-      createdat: new Date()
-    };
-    updateObj = {
-      $set: {
-        team: team,
-        updatedat: new Date()
-      },
-      $unset: {
-        invites: 1
-      },
-      $addToSet: {
-        posts: post
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Add a post record into player's record
-  */
-
-  exports.addPost = function(userid, post, callback) {
-    var findObj, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    findObj = {
-      _id: userid
-    };
-    post || (post = {});
-    post.createdat = new Date();
-    post.id = new newUserRepo.ObjectId();
-    updateObj = {
-      $set: {
-        updatedat: new Date()
-      },
-      $addToSet: {
-        posts: post
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Remove a post from player's record
-  */
-
-  exports.removePost = function(userid, postid, callback) {
-    var findObj, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    console.assert(postid, 'postid cannot be null or 0');
-    if (postid == null) throw 'postid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof postid === 'string') postid = new newUserRepo.ObjectId(postid);
-    findObj = {
-      _id: userid
-    };
-    updateObj = {
-      $set: {
-        updatedat: new Date()
-      },
-      $pull: {
-        posts: {
-          id: postid
-        }
-      }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Add a comment record into player's record
-  */
-
-  exports.addComment = function(userid, postid, data, callback) {
-    var findObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    console.assert(postid, 'postid cannot be null or 0');
-    if (postid == null) throw 'postid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof postid === 'string') postid = new newUserRepo.ObjectId(postid);
-    data || (data = {});
-    data.id = new newUserRepo.ObjectId();
-    data.createdat = new Date();
-    findObj = {
-      _id: userid
-    };
-    try {
-      return newUserRepo.getById(userid, function(getErr, user) {
-        var post, _i, _len, _ref, _ref2, _results;
-        if (getErr != null) return callback(getErr);
-        _ref = user != null ? user.posts : void 0;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          post = _ref[_i];
-          if (post != null ? (_ref2 = post.id) != null ? _ref2.equals(postid) : void 0 : void 0) {
-            _results.push((function(post) {
-              var updateObj;
-              post.comments || (post.comments = []);
-              post.comments.push(data);
-              updateObj = {
-                $set: {
-                  posts: user != null ? user.posts : void 0,
-                  updatedat: new Date()
-                }
-              };
-              return newUserRepo.update(findObj, updateObj, {}, callback);
-            })(post));
+    console.assert(user, 'user cannot be null');
+    if (user == null) throw 'user cannot be null';
+    console.assert(user != null ? user.address : void 0, 'address cannot be empty');
+    geocoder = require('geocoder');
+    return geocoder.geocode(user != null ? user.address : void 0, function(err, data) {
+      var _ref, _ref2, _ref3;
+      if ((data != null ? data.status : void 0) === 'OK') {
+        user.location = data != null ? (_ref = data.results) != null ? (_ref2 = _ref[0]) != null ? (_ref3 = _ref2.geometry) != null ? _ref3.location : void 0 : void 0 : void 0 : void 0;
+        return newUserRepo.update({
+          _id: user != null ? user._id : void 0
+        }, {
+          $set: {
+            location: user.location
           }
-        }
-        return _results;
-      });
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Remove a comment
-  */
-
-  exports.removeComment = function(userid, postid, commentid, callback) {
-    var findObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    console.assert(postid, 'postid cannot be null or 0');
-    if (postid == null) throw 'postid is null or empty';
-    console.assert(commentid, 'commentid cannot be null or 0');
-    if (commentid == null) throw 'commentid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof postid === 'string') postid = new newUserRepo.ObjectId(postid);
-    if (typeof commentid === 'string') {
-      commentid = new newUserRepo.ObjectId(commentid);
-    }
-    findObj = {
-      _id: userid
-    };
-    try {
-      return newUserRepo.getById(userid, function(getErr, user) {
-        var post, _i, _len, _ref, _ref2, _results;
-        if (getErr != null) return callback(getErr);
-        _ref = user != null ? user.posts : void 0;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          post = _ref[_i];
-          if (post != null ? (_ref2 = post.id) != null ? _ref2.equals(postid) : void 0 : void 0) {
-            _results.push((function(post) {
-              var comment, index, updateObj, _fn, _len2, _ref3;
-              _ref3 = post != null ? post.comments : void 0;
-              _fn = function(comment, index) {
-                var _ref4;
-                if (comment != null ? (_ref4 = comment.id) != null ? _ref4.equals(commentid) : void 0 : void 0) {
-                  return post != null ? post.comments.splice(index, 1) : void 0;
-                }
-              };
-              for (index = 0, _len2 = _ref3.length; index < _len2; index++) {
-                comment = _ref3[index];
-                _fn(comment, index);
-              }
-              updateObj = {
-                $set: {
-                  posts: user != null ? user.posts : void 0,
-                  updatedat: new Date()
-                }
-              };
-              return newUserRepo.update(findObj, updateObj, {}, callback);
-            })(post));
-          }
-        }
-        return _results;
-      });
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  /*
-  Add a vote record into player's record
-  */
-
-  exports.addTeamInvite = function(userid, teamid, callback) {
-    var findObj, invite, invitedPost, updateObj;
-    if (callback == null) callback = function() {};
-    console.assert(userid, 'userid cannot be null or 0');
-    if (userid == null) throw 'userid is null or empty';
-    console.assert(teamid, 'teamid cannot be null or 0');
-    if (teamid == null) throw 'teamid is null or empty';
-    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
-    if (typeof teamid === 'string') teamid = new newUserRepo.ObjectId(teamid);
-    findObj = {
-      _id: userid
-    };
-    invite = {
-      teamid: teamid
-    };
-    invitedPost = {
-      id: new newUserRepo.ObjectId(),
-      type: 'invite',
-      data: {
-        teamid: teamid
-      },
-      createdat: new Date()
-    };
-    updateObj = {
-      $set: {
-        updatedat: new Date()
-      },
-      $addToSet: {
-        invites: invite,
-        posts: invitedPost
+        }, {}, callback);
+      } else {
+        return callback(err);
       }
-    };
-    try {
-      return newUserRepo.update(findObj, updateObj, {}, callback);
-    } catch (e) {
-      console.trace(e);
-      return callback(e);
-    }
-  };
-
-  exports.sortingPlayers = function(player1, player2) {
-    var avg1, avg2, loss1, loss2, total1, total2, win1, win2, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
-    win1 = (_ref = player1 != null ? (_ref2 = player1.stats) != null ? _ref2.win : void 0 : void 0) != null ? _ref : 0;
-    loss1 = (_ref3 = player1 != null ? (_ref4 = player1.stats) != null ? _ref4.loss : void 0 : void 0) != null ? _ref3 : 0;
-    total1 = win1 + loss1;
-    avg1 = total1 ? win1 / total1 : 0;
-    win2 = (_ref5 = player2 != null ? (_ref6 = player2.stats) != null ? _ref6.win : void 0 : void 0) != null ? _ref5 : 0;
-    loss2 = (_ref7 = player2 != null ? (_ref8 = player2.stats) != null ? _ref8.loss : void 0 : void 0) != null ? _ref7 : 0;
-    total2 = win2 + loss2;
-    avg2 = total2 ? win2 / total2 : 0;
-    if (avg1 !== avg2) {
-      return -avg1 + avg2;
-    } else if (win1 !== win2) {
-      return -win1 + win2;
-    } else {
-      return loss1 - loss2;
-    }
+    });
   };
 
   exports.insert = function(user, callback) {
+    var _this = this;
     if (callback == null) callback = function() {};
     console.assert(user, 'user cannot be null');
     if (user == null) throw 'user cannot be null';
@@ -613,6 +161,7 @@
       throw 'Password cannot be null or empty';
     }
     return utils.execute(newUserRepo.getByUsername, user.username).then(function(err, existingUser, cb) {
+      if (cb == null) cb = function() {};
       if (err != null) {
         return callback(err);
       } else if (existingUser != null) {
@@ -629,7 +178,17 @@
         }
       }
     }).then(function(err, newUsers, cb) {
-      return callback(err, newUsers != null ? newUsers[0] : void 0);
+      var _ref, _ref2;
+      if (cb == null) cb = function() {};
+      _this.addedUser = newUsers != null ? newUsers[0] : void 0;
+      if (((_ref = _this.addedUser) != null ? _ref.address : void 0) && !((_ref2 = _this.addedUser) != null ? _ref2.location : void 0)) {
+        return updateLocation(_this.addedUser, cb);
+      } else {
+        return callback(err, _this.addedUser);
+      }
+    }).then(function(err, updatedUser, cb) {
+      if (cb == null) cb = function() {};
+      return callback(err, _this.addedUser);
     });
   };
 
@@ -646,8 +205,7 @@
             var db;
             db = cursor.db;
             callback.apply(null, arguments);
-            cursor.close();
-            return db.close();
+            return cursor.close();
           });
         } else {
           return callback();
@@ -706,8 +264,7 @@
           var db;
           db = cursor.db;
           callback.apply(null, arguments);
-          cursor.close();
-          return db.close();
+          return cursor.close();
         });
       }
     }).then(function(err, users, cb) {

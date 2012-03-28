@@ -4,6 +4,7 @@
   repo = require('../repository/customers');
 
   exports.add = function(customer, callback) {
+    var geocoder;
     if (callback == null) callback = function() {};
     console.assert(customer, 'customer cannot be null or 0');
     if (customer == null) throw 'customer is null or empty';
@@ -13,9 +14,22 @@
       }
     }
     try {
-      return repo.create(customer, function(err, addedcustomers) {
-        return callback(err, addedcustomers != null ? addedcustomers[0] : void 0);
-      });
+      if (customer != null ? customer.address : void 0) {
+        geocoder = require('geocoder');
+        return geocoder.geocode(customer != null ? customer.address : void 0, function(err, data) {
+          var _ref, _ref2, _ref3;
+          if ((data != null ? data.status : void 0) === 'OK') {
+            customer.location = data != null ? (_ref = data.results) != null ? (_ref2 = _ref[0]) != null ? (_ref3 = _ref2.geometry) != null ? _ref3.location : void 0 : void 0 : void 0 : void 0;
+          }
+          return repo.create(customer, function(err, addedcustomers) {
+            return callback(err, addedcustomers != null ? addedcustomers[0] : void 0);
+          });
+        });
+      } else {
+        return repo.create(customer, function(err, addedcustomers) {
+          return callback(err, addedcustomers != null ? addedcustomers[0] : void 0);
+        });
+      }
     } catch (e) {
       console.trace(e);
       throw e;
@@ -58,8 +72,7 @@
             }
             db = cursor.db;
             callback.apply(null, [toarrayerr, customers]);
-            cursor.close();
-            return db.close();
+            return cursor.close();
           });
         } else {
           return callback();

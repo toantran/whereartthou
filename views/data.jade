@@ -8,17 +8,20 @@
     input(type='text', name='customeraddress', placeholder='Address', required)
     button.btn.btn-primary(type='submit') Save
 .row
-  .label.label-info Clients
-.row
   .span12
     table.table.table-striped
       thead
         tr
-          td #
-          td Client Name
-          td Contact
-          td Address
-          td Additional Info
+          td
+            .label.label-info #
+          td
+            .label.label-info Client Name
+          td
+            .label.label-info Contact
+          td
+            .label.label-info Address
+          td
+            .label.label-info Additional Info
           td
       tbody#customer-list
         - if (typeof customers != 'undefined')

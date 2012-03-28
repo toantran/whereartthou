@@ -82,7 +82,6 @@
     var _ref3,
       _this = this;
     if (callback == null) callback = function() {};
-    console.log('db = ', root != null ? root.db : void 0);
     if ((root != null ? (_ref3 = root.db) != null ? _ref3.state : void 0 : void 0) !== 'connected') {
       return db_connector.open(function(err, db) {
         root.db = db;

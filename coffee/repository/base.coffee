@@ -59,7 +59,6 @@ Repository::setCollectionName = (@collectionName) ->
 
 
 Repository::getDb = (callback = ->) ->
-  console.log 'db = ', root?.db
   if root?.db?.state isnt 'connected'
     db_connector.open (err, db) =>
       root.db = db

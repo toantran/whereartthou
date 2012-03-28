@@ -1,5 +1,25 @@
 (function() {
 
+  exports.defaultLocation = function(req, res, next) {
+    var userSvc;
+    userSvc = require('../services/user');
+    try {
+      return userSvc.getById(req.user._id, function(err, user) {
+        return res.send({
+          success: !!!err,
+          location: user != null ? user.location : void 0,
+          error: err
+        });
+      });
+    } catch (e) {
+      console.trace(e);
+      return res.send({
+        success: false,
+        error: e
+      });
+    }
+  };
+
   exports.accountadd = function(req, res, next) {
     return res.render('add', {
       layout: true,
@@ -14,6 +34,7 @@
     account.username = req.param('username', '');
     account.password = req.param('password', '');
     account.passwordconfirm = req.param('passwordconfirm', '');
+    account.address = req.param('address', '');
     userSvc = require('../services/user');
     try {
       return userSvc.insert(account, function(err, user) {

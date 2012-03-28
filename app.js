@@ -71,6 +71,8 @@
     }
   };
 
+  app.get('/defloc', restrict, routes.defaultLocation);
+
   app.get('/accountadd', routes.accountadd);
 
   app.post('/accountadd', routes.createaccount);

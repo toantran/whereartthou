@@ -1,3 +1,19 @@
+exports.defaultLocation = (req, res, next) ->
+  userSvc = require '../services/user'
+  
+  try
+    userSvc.getById req.user._id, (err, user) ->
+      res.send
+        success: !!! (err)
+        location: user?.location
+        error: err
+  catch e
+    console.trace e
+    res.send
+      success: false
+      error: e
+
+
 exports.accountadd = (req, res, next) ->
   res.render 'add',
     layout: true
@@ -10,6 +26,7 @@ exports.createaccount = (req, res, next) ->
   account.username = req.param 'username', ''
   account.password = req.param 'password', ''
   account.passwordconfirm = req.param 'passwordconfirm' ,''
+  account.address = req.param 'address' ,''
 
   userSvc = require '../services/user'
   try

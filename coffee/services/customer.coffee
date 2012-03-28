@@ -8,8 +8,16 @@ exports.add = (customer, callback = ->) ->
   customer?.userid = new repo.ObjectId(customer?.userid) if customer?.userid? and typeof customer?.userid is 'string'
   
   try
-    repo.create customer, (err, addedcustomers) ->
-      callback err, addedcustomers?[0]
+    if customer?.address
+      geocoder = require 'geocoder'
+      geocoder.geocode customer?.address, (err, data) ->
+        if data?.status is 'OK'
+          customer.location = data?.results?[0]?.geometry?.location
+        repo.create customer, (err, addedcustomers) ->    
+          callback err, addedcustomers?[0]
+    else
+      repo.create customer, (err, addedcustomers) ->    
+        callback err, addedcustomers?[0]
   catch e
     console.trace e
     throw e
@@ -45,7 +53,6 @@ exports.getAll = (userid, filter, callback = ->) ->
           db = cursor.db
           callback.apply null, [toarrayerr, customers]
           cursor.close()
-          db.close()
       else
         callback()
         
