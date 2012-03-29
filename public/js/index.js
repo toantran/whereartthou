@@ -1,7 +1,7 @@
 (function() {
 
   jQuery(function($) {
-    var buildDetailInfo, clearGrid, clearMarkers, createMarker, displayCustomer, displayCustomers, highlightCustomerLocation, initialize, loadCustomers, loadDefaultLocation, onMapLoad, onclientrowclick, popLatLong, showInGrid;
+    var buildDetailInfo, clearGrid, clearMarkers, createMarker, displayCustomer, displayCustomers, getCustomerList, highlightCustomerLocation, initialize, loadCustomers, loadDefaultLocation, onMapLoad, onclientrowclick, onsearchclick, popLatLong, showInGrid;
     buildDetailInfo = function(customer) {
       var contentString;
       return contentString = '<div class="alert alert-info">' + '<div>' + '<strong>Name: </strong>' + (customer != null ? customer.name : void 0) + '</div>' + '<div>' + '<strong>Contact: </strong>' + (customer != null ? customer.contact : void 0) + '</div>' + '<div>' + '<strong>Address: </strong>' + (customer != null ? customer.address : void 0) + '</div>' + '</div>';
@@ -67,6 +67,8 @@
     };
     displayCustomers = function(customers) {
       var customer, _i, _len, _results;
+      clearMarkers();
+      clearGrid();
       if (customers != null ? customers.length : void 0) {
         _results = [];
         for (_i = 0, _len = customers.length; _i < _len; _i++) {
@@ -99,8 +101,6 @@
       var _this = this;
       return $.get('customers').success(function(data) {
         if (data != null ? data.success : void 0) {
-          clearMarkers();
-          clearGrid();
           _this.customers = data != null ? data.customers : void 0;
           return displayCustomers(_this.customers);
         }
@@ -171,7 +171,43 @@
       customerid = $(e.target).closest('tr.client-row').attr('customerid');
       return highlightCustomerLocation(customerid);
     };
-    return $('.clientlist-container').on('click', onclientrowclick);
+    getCustomerList = function() {
+      return this.customers;
+    };
+    onsearchclick = function(e) {
+      var currCustomers, customer, matchCustomers, patt, val;
+      val = $('input#search_input').val();
+      if (val) {
+        patt = new RegExp(val, 'i');
+        currCustomers = getCustomerList();
+        matchCustomers = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = currCustomers.length; _i < _len; _i++) {
+            customer = currCustomers[_i];
+            if (patt.test(customer.name) || patt.test(customer.address) || patt.test(customer.contact)) {
+              _results.push(customer);
+            }
+          }
+          return _results;
+        })();
+        if (matchCustomers != null ? matchCustomers.length : void 0) {
+          return displayCustomers(matchCustomers);
+        } else {
+          return displayCustomers([]);
+        }
+      } else {
+        return displayCustomers(getCustomerList());
+      }
+    };
+    $('.clientlist-container').on('click', onclientrowclick);
+    $('.search-bar button').on('click', onsearchclick);
+    return $('input#search_input').keypress(function(e) {
+      if (e.which === 13) {
+        e.preventDefault();
+        return onsearchclick();
+      }
+    });
   });
 
 }).call(this);

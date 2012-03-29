@@ -1,16 +1,13 @@
 .row
   .span3
     .client-container
-      .navbar
-        .navbar-inner
-          .container
-            ul.nav
-              li
-                form.navbar-search
-                  input(type='text', placeholder='Search...')
-              li
-                button.btn.btn-info
-                  i.icon-search.icon-white
+      .row
+        ul.search-bar
+          li
+            input#search_input(type='text', placeholder='Search...')
+          li
+            button.btn.btn-info
+              i.icon-search.icon-white
       .row
         .span3.clientlist-container
           table.table.table-striped

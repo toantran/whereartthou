@@ -64,7 +64,9 @@ jQuery ($) ->
       showInGrid cust
   
   
-  displayCustomers = (customers) ->          
+  displayCustomers = (customers) ->
+    clearMarkers()
+    clearGrid()                  
     displayCustomer customer for customer in customers if customers?.length
     
     
@@ -83,8 +85,8 @@ jQuery ($) ->
     $.get('customers')
     .success (data) =>      
       if data?.success          
-        clearMarkers()
-        clearGrid()
+        #clearMarkers()
+        #clearGrid()
         @customers = data?.customers                
         displayCustomers @customers
   
@@ -143,4 +145,34 @@ jQuery ($) ->
     highlightCustomerLocation customerid
   
   
+  getCustomerList = ->
+    @customers
+  
+  
+  onsearchclick = (e) ->    
+    val = $('input#search_input').val()
+    if val
+      patt = new RegExp(val, 'i') 
+      currCustomers = getCustomerList()
+      matchCustomers = (customer for customer in currCustomers when patt.test(customer.name) or patt.test(customer.address) or patt.test(customer.contact))
+      if matchCustomers?.length
+        displayCustomers matchCustomers
+      else
+        displayCustomers []
+    else
+      displayCustomers getCustomerList()
+    
+    
+  
   $('.clientlist-container').on 'click', onclientrowclick
+  
+  $('.search-bar button').on 'click', onsearchclick
+  
+  $('input#search_input').keypress (e)->
+    if e.which is 13 #ENTER
+      e.preventDefault()
+      onsearchclick()
+  
+  
+  
+  

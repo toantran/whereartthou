@@ -1,7 +1,7 @@
 (function() {
 
   jQuery(function($) {
-    var formsubmit, global, makethis;
+    var formsubmit, global, makethis, progressHandlingFunction;
     makethis = function() {
       return this;
     };
@@ -29,7 +29,45 @@
       });
       return false;
     };
-    return $('form#customer-form').on('submit', formsubmit);
+    $('form#customer-form').on('submit', formsubmit);
+    $(':file').change(function() {
+      var file, name, size, type, _ref;
+      file = (_ref = this.files) != null ? _ref[0] : void 0;
+      name = file.name, size = file.size, type = file.type;
+      if (type !== 'text/csv') return alert('Invalid file');
+    });
+    progressHandlingFunction = function(e) {
+      if (e.lengthComputable) {
+        return $('progress').attr({
+          value: e.loaded,
+          max: e.total
+        });
+      }
+    };
+    return $('#upload-data-form input[type="submit"]').on('click', function() {
+      var formdata;
+      formdata = new FormData($('form#upload-data-form'));
+      $.ajax({
+        url: '/upload',
+        type: 'POST',
+        xhr: function() {
+          var myXhr;
+          myXhr = $.ajaxSettings.xhr();
+          if (myXhr.upload) {
+            myXhr.upload.addEventListener('progress', progressHandlingFunction, false);
+          }
+          return myXhr;
+        },
+        success: function(data) {
+          return console.log(data);
+        },
+        data: formdata,
+        cache: false,
+        contentType: false,
+        processData: false
+      });
+      return false;
+    });
   });
 
 }).call(this);

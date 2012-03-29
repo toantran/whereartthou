@@ -1,12 +1,26 @@
 .row
-  form#customer-form.form-inline
-    //label Client Name
-    input(type='text', name='customername', placeholder='Client Name', required)
-    //label Contact
-    input(type='text', name='customercontact', placeholder='Contact')
-    //label Address
-    input(type='text', name='customeraddress', placeholder='Address', required)
-    button.btn.btn-primary(type='submit') Save
+  .span6
+    .accordion-heading
+      a.accordion-toggle(href='#',data-toggle='collapse', data-target='#import_container') Import Data
+    .accordion-body.collapse#import_container
+      .accordion-inner
+        form#upload-data-form(action='/upload', method='POST', enctype='multipart/form-data')
+          input(type='file', name='upload-file')
+          input.btn.btn-primary(type='submit', value='Upload')    
+.row  
+  .span12
+    .accordion-heading
+      a.accordion-toggle(href='#',data-toggle='collapse', data-target='#customer_form_container') Enter New Data
+    .accordion-body.collapse#customer_form_container
+      .accordion-inner
+        form#customer-form
+          label Client Name
+          input(type='text', name='customername', placeholder='Client Name', required)
+          label Contact
+          input(type='text', name='customercontact', placeholder='Contact')
+          label Address
+          input(type='text', name='customeraddress', placeholder='Address', required)
+          button.btn.btn-primary(type='submit') Save
 .row
   .span12
     table.table.table-striped
