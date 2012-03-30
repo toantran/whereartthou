@@ -118,6 +118,22 @@ exports.updateLocation = updateLocation = (user, callback = ->) ->
       callback err    
   
 
+exports.updateprofile = (userid, profile = {}, callback = ->) ->
+  console.assert userid, 'userid cannot be null or 0'  
+  throw 'userid is null or empty' unless userid?
+  
+  userid = new newUserRepo.ObjectId( userid ) if typeof userid is 'string'
+  findObj = _id : userid
+  profile.updatedat = new Date()
+  updateObj = 
+    $set: profile
+    
+  try
+    newUserRepo.update findObj, updateObj, {}, callback  
+  catch e
+    console.trace e
+    callback e
+
     
 exports.insert = (user, callback = ->) ->
   console.assert user, 'user cannot be null'  
@@ -225,7 +241,7 @@ exports.getUserByToken = (token, callback = ->) ->
     cb()
 
     
-exports.setPassword = (userid, password, callback = ->) ->
+exports.setPassword = setPassword = (userid, password, callback = ->) ->
   console.assert userid, 'userid cannot be null'
   throw 'userid cannot be null' unless userid? and userid
   
@@ -244,6 +260,22 @@ exports.setPassword = (userid, password, callback = ->) ->
     console.trace e
     callback e  
     
+
+exports.changePassword = (userid, oldpassword, newpassword, callback = ->) ->
+  console.assert userid, 'userid cannot be null'
+  throw 'userid cannot be null' unless userid? and userid
+  console.assert newpassword, 'newpassword cannot be null'
+  throw 'newpassword cannot be null' unless newpassword? and newpassword
+  
+  newUserRepo.getById userid, (err, user) ->
+    return callback err if err
+    
+    hop = hash oldpassword, 'a little dog'
+    
+    if user?.password is hop 
+      setPassword userid, newpassword, callback
+    else
+      callback 'Incorrect current password'
 
     
 exports.setSchema = (userid, schema, callback = ->) ->

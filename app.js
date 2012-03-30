@@ -71,6 +71,12 @@
     }
   };
 
+  app.post('/changepassword', restrict, routes.changepassword);
+
+  app.get('/profile', restrict, routes.profile);
+
+  app.post('/profile', restrict, routes.updateprofile);
+
   app.del('/customerremove', restrict, routes.customerdelete);
 
   app.post('/addcolumn', restrict, routes.addcolumn);

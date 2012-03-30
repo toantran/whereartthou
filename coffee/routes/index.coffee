@@ -1,3 +1,59 @@
+exports.profile = (req, res, next) ->
+  res.render 'profile'
+    layout: true
+    title: 'Where Art Thou - Profile'
+    user: req.user
+
+
+exports.updateprofile = (req, res, next) ->
+  account = {}
+  account.name = req.param 'companyname', ''
+  account.username = req.param 'username', ''
+  account.address = req.param 'address' ,''
+  
+  usersvc = require '../services/user'
+  usersvc.updateprofile req.user?._id, account, (err ) ->
+    if err
+      res.send
+        success: false
+        error: err
+    else
+      usersvc.getById req.user?._id, (err, user) ->
+        req.session?.regenerate ->
+          req.session?.user = user
+          res.send
+            success: !!!(err)
+            error: err
+            user: user
+            
+            
+            
+exports.changepassword = (req, res, next) ->
+  currpass = req.param 'currentpassword', ''
+  password = req.param 'password', ''
+  passconfirm = req.param 'passwordconfirm', ''
+  
+  usersvc = require '../services/user'
+  
+  if password is passconfirm
+    usersvc.changePassword req.user?._id, currpass, password, (err) ->
+      if err
+        res.send
+          success: false
+          error: err
+      else
+        usersvc.getById req.user?._id, (err, user) ->
+          req.session?.regenerate ->
+            req.session?.user = user
+            res.send
+              success: !!!(err)
+              error: err
+              user: user
+  else
+    res.send
+      success: false
+      error: 'Passwords do not match'
+  
 
 
 exports.addcolumn = (req, res, next) ->

@@ -1,5 +1,5 @@
 (function() {
-  var createEmailContent, crypto, hash, newUserRepo, updateLocation, utils;
+  var createEmailContent, crypto, hash, newUserRepo, setPassword, updateLocation, utils;
 
   crypto = require('crypto');
 
@@ -143,6 +143,28 @@
     });
   };
 
+  exports.updateprofile = function(userid, profile, callback) {
+    var findObj, updateObj;
+    if (profile == null) profile = {};
+    if (callback == null) callback = function() {};
+    console.assert(userid, 'userid cannot be null or 0');
+    if (userid == null) throw 'userid is null or empty';
+    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
+    findObj = {
+      _id: userid
+    };
+    profile.updatedat = new Date();
+    updateObj = {
+      $set: profile
+    };
+    try {
+      return newUserRepo.update(findObj, updateObj, {}, callback);
+    } catch (e) {
+      console.trace(e);
+      return callback(e);
+    }
+  };
+
   exports.insert = function(user, callback) {
     var _this = this;
     if (callback == null) callback = function() {};
@@ -169,6 +191,7 @@
       } else {
         user.createdat = new Date();
         user.password = hash(user.password, 'a little dog');
+        delete user.passwordconfirm;
         if (user.dataschema == null) {
           user.dataschema = {
             name: 1,
@@ -286,7 +309,7 @@
     });
   };
 
-  exports.setPassword = function(userid, password, callback) {
+  exports.setPassword = setPassword = function(userid, password, callback) {
     var encryptedPassword, findObj, updateObj;
     if (callback == null) callback = function() {};
     console.assert(userid, 'userid cannot be null');
@@ -308,6 +331,26 @@
       console.trace(e);
       return callback(e);
     }
+  };
+
+  exports.changePassword = function(userid, oldpassword, newpassword, callback) {
+    if (callback == null) callback = function() {};
+    console.assert(userid, 'userid cannot be null');
+    if (!((userid != null) && userid)) throw 'userid cannot be null';
+    console.assert(newpassword, 'newpassword cannot be null');
+    if (!((newpassword != null) && newpassword)) {
+      throw 'newpassword cannot be null';
+    }
+    return newUserRepo.getById(userid, function(err, user) {
+      var hop;
+      if (err) return callback(err);
+      hop = hash(oldpassword, 'a little dog');
+      if ((user != null ? user.password : void 0) === hop) {
+        return setPassword(userid, newpassword, callback);
+      } else {
+        return callback('Incorrect current password');
+      }
+    });
   };
 
   exports.setSchema = function(userid, schema, callback) {

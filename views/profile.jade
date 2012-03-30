@@ -2,28 +2,30 @@
   .span4.offset4
     .row
       .span4
-        form(method='POST')
+        form#profile-form(method='POST', action='/profile')
           fieldset
-            legend PROFILE
+            legend Profile
             .space1
-            label(for='form-signup-nickname') Company Name
-            input#form-signup-nickname(maxlength='255', name='companyname', size='25', type='text', value=nickname, placeholder='Enter your company name')= user.nickname
+            label(for='form-signup-nickname') Name
+            input#form-signup-nickname(maxlength='255', name='companyname', size='25', type='text', value='#{user.name}', placeholder='Enter your company name')
             label(for='form-login-username') Email address
-            input#form-login-username(maxlength='255', name='username', size='25', type='text', required, placeholder='Enter your email address')= user.username
-            label Company Address (optional)
-            textarea(name='address', placeholder='Enter your company address')= user.address
-            .message!= partial('messages') 
+            input#form-login-username(maxlength='255', name='username', size='25', type='text', required, placeholder='Enter your email address', value='#{user.username}')
+            label Address (optional)
+            textarea(name='address', placeholder='Enter your company address', value='#{user.address}')= user.address
+            .message
             button.btn.btn-primary(type='submit') Save
     .row
       .span4
-        form(method='POST', action='/changepassword')
+        form#changepass-form(method='POST', action='/changepassword')
           fieldset
             legend Change password
             .space1
+            label(for='form-current-password') Current Password
+            input#form-current-password(maxlength='16', name='currentpassword', size='25', type='password', required, placeholder='Enter your current password')
             label(for='form-login-password') Password
-            input#form-login-password(maxlength='16', name='password', size='25', type='password', required, placeholder='Enter your password')
+            input#form-login-password(maxlength='16', name='password', size='25', type='password', required, placeholder='Enter your new password')
             label(for='form-login-password-confirm') Confirm Password
-            input#form-login-password-confirm(maxlength='16', name='passwordconfirm', size='25', type='password', required, placeholder='Re-enter your password')
-            .message!= partial('messages') 
+            input#form-login-password-confirm(maxlength='16', name='passwordconfirm', size='25', type='password', required, placeholder='Re-enter your new password')
+            .message
             button.btn.btn-primary(type='submit') Save
-script(type='text/javascript', src='/js/signup.js')
+script(type='text/javascript', src='/js/profile.js')

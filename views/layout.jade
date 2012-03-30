@@ -5,6 +5,8 @@
   - var roles = []
 - if (loggedIn)
   roles = request.session.user.roles || []
+- if (typeof title === 'undefined')
+  - title = 'Where Art Thou'
   
 !!! 5
 html.nojs

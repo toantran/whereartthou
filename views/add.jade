@@ -14,7 +14,7 @@
           fieldset
             legend Sign Up
             .space1
-            label(for='form-signup-nickname') Company Name
+            label(for='form-signup-nickname') Name
             input#form-signup-nickname(maxlength='255', name='companyname', size='25', type='text', value=nickname, placeholder='Enter your company name')
             label(for='form-login-username') Email address
             input#form-login-username(maxlength='255', name='username', size='25', type='text', required, placeholder='Enter your email address')
@@ -22,7 +22,7 @@
             input#form-login-password(maxlength='16', name='password', size='25', type='password', required, placeholder='Enter your password')
             label(for='form-login-password-confirm') Confirm Password
             input#form-login-password-confirm(maxlength='16', name='passwordconfirm', size='25', type='password', required, placeholder='Re-enter your password')
-            label Company Address (optional)
+            label Address (optional)
             textarea(name='address', placeholder='Enter your company address')
             .message!= partial('messages') 
             button.btn.btn-primary(type='submit') Sign Up

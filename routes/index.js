@@ -1,6 +1,82 @@
 (function() {
   var __hasProp = Object.prototype.hasOwnProperty;
 
+  exports.profile = function(req, res, next) {
+    return res.render('profile', {
+      layout: true,
+      title: 'Where Art Thou - Profile',
+      user: req.user
+    });
+  };
+
+  exports.updateprofile = function(req, res, next) {
+    var account, usersvc, _ref;
+    account = {};
+    account.name = req.param('companyname', '');
+    account.username = req.param('username', '');
+    account.address = req.param('address', '');
+    usersvc = require('../services/user');
+    return usersvc.updateprofile((_ref = req.user) != null ? _ref._id : void 0, account, function(err) {
+      var _ref2;
+      if (err) {
+        return res.send({
+          success: false,
+          error: err
+        });
+      } else {
+        return usersvc.getById((_ref2 = req.user) != null ? _ref2._id : void 0, function(err, user) {
+          var _ref3;
+          return (_ref3 = req.session) != null ? _ref3.regenerate(function() {
+            var _ref4;
+            if ((_ref4 = req.session) != null) _ref4.user = user;
+            return res.send({
+              success: !!!err,
+              error: err,
+              user: user
+            });
+          }) : void 0;
+        });
+      }
+    });
+  };
+
+  exports.changepassword = function(req, res, next) {
+    var currpass, passconfirm, password, usersvc, _ref;
+    currpass = req.param('currentpassword', '');
+    password = req.param('password', '');
+    passconfirm = req.param('passwordconfirm', '');
+    usersvc = require('../services/user');
+    if (password === passconfirm) {
+      return usersvc.changePassword((_ref = req.user) != null ? _ref._id : void 0, currpass, password, function(err) {
+        var _ref2;
+        if (err) {
+          return res.send({
+            success: false,
+            error: err
+          });
+        } else {
+          return usersvc.getById((_ref2 = req.user) != null ? _ref2._id : void 0, function(err, user) {
+            var _ref3;
+            return (_ref3 = req.session) != null ? _ref3.regenerate(function() {
+              var _ref4;
+              if ((_ref4 = req.session) != null) _ref4.user = user;
+              return res.send({
+                success: !!!err,
+                error: err,
+                user: user
+              });
+            }) : void 0;
+          });
+        }
+      });
+    } else {
+      return res.send({
+        success: false,
+        error: 'Passwords do not match'
+      });
+    }
+  };
+
   exports.addcolumn = function(req, res, next) {
     var fielddef, fieldname, schema, user, userSvc, _ref, _ref2;
     fieldname = req.param('fieldname', '');
