@@ -138,6 +138,7 @@ exports.insert = (user, callback = ->) ->
     else
       user.createdat = new Date()
       user.password = hash user.password, 'a little dog'
+      delete user.passwordconfirm
       user.dataschema ?= name: 1, contact: 1, address: 1
       try 
         newUserRepo.create user, cb
