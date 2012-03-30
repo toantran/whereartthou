@@ -3,6 +3,45 @@
 
   repo = require('../repository/customers');
 
+  exports.remove = function(id, callback) {
+    if (callback == null) callback = function() {};
+    console.assert(id, 'customerid cannot be null or 0');
+    if (id == null) throw 'customerid is null or empty';
+    if (typeof id === 'string') id = new repo.ObjectId(id);
+    try {
+      return repo.remove({
+        _id: id
+      }, callback);
+    } catch (e) {
+      console.trace(e);
+      return callback(e);
+    }
+  };
+
+  exports.setDefVal = function(userid, setdata, callback) {
+    var findObj, updateObj;
+    if (callback == null) callback = function() {};
+    console.assert(userid, 'userid cannot be null or 0');
+    if (userid == null) throw 'userid is null or empty';
+    if (setdata == null) setdata = {};
+    setdata.updatedat = new Date();
+    if (typeof userid === 'string') userid = new repo.ObjectId(userid);
+    findObj = {
+      userid: userid
+    };
+    updateObj = {
+      $set: setdata
+    };
+    try {
+      return repo.update(findObj, updateObj, {
+        multi: true
+      }, callback);
+    } catch (e) {
+      console.trace(e);
+      return callback(e);
+    }
+  };
+
   exports.add = function(customer, callback) {
     var geocoder;
     if (callback == null) callback = function() {};
@@ -60,7 +99,6 @@
         if (readerr) return callback(readerr);
         if (cursor != null) {
           return cursor.toArray(function(toarrayerr, customers) {
-            var db;
             if (customers != null) {
               customers.sort(function(c1, c2) {
                 if ((c1 != null ? c1.name : void 0) < (c2 != null ? c2.name : void 0)) {
@@ -70,7 +108,6 @@
                 }
               });
             }
-            db = cursor.db;
             callback.apply(null, [toarrayerr, customers]);
             return cursor.close();
           });

@@ -1,7 +1,7 @@
 (function() {
 
   jQuery(function($) {
-    var buildDetailInfo, clearGrid, clearMarkers, createMarker, displayCustomer, displayCustomers, getCustomerList, highlightCustomerLocation, initialize, loadCustomers, loadDefaultLocation, onMapLoad, onclientrowclick, onsearchclick, popLatLong, showInGrid;
+    var buildDetailInfo, clearGrid, clearMarkers, createMarker, displayCustomer, displayCustomers, getCustomerList, highlightCustomerLocation, highlightCustomers, initialize, loadCustomers, loadDefaultLocation, onMapLoad, onclientrowclick, onsearchclick, popLatLong, resetMarkers, showInGrid;
     buildDetailInfo = function(customer) {
       var contentString;
       return contentString = '<div class="alert alert-info">' + '<div>' + '<strong>Name: </strong>' + (customer != null ? customer.name : void 0) + '</div>' + '<div>' + '<strong>Contact: </strong>' + (customer != null ? customer.contact : void 0) + '</div>' + '<div>' + '<strong>Address: </strong>' + (customer != null ? customer.address : void 0) + '</div>' + '</div>';
@@ -130,7 +130,8 @@
       this.map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
       this.geo = new google.maps.Geocoder();
       this.icon = new google.maps.MarkerImage('/images/mapslt.png', new google.maps.Size(9, 9), new google.maps.Point(138, 227));
-      this.hlicon = new google.maps.MarkerImage('/images/m3.png');
+      this.hlicon = new google.maps.MarkerImage('/images/red_markers_A_J2.png', new google.maps.Size(20, 34), new google.maps.Point(0, 340));
+      this.hlshadow = new google.maps.MarkerImage('/images/shadow50.png', new google.maps.Size(37, 34), new google.maps.Point(0, 0));
       this.infoWindow = new google.maps.InfoWindow();
       loadDefaultLocation();
       return loadCustomers();
@@ -174,6 +175,42 @@
     getCustomerList = function() {
       return this.customers;
     };
+    resetMarkers = function() {
+      var customer, _i, _len, _ref, _ref2, _results,
+        _this = this;
+      if ((_ref = this.customers) != null ? _ref.length : void 0) {
+        _ref2 = this.customers;
+        _results = [];
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          customer = _ref2[_i];
+          _results.push((function(customer) {
+            var marker;
+            marker = customer != null ? customer.marker : void 0;
+            if (marker != null) return marker.setIcon(_this.icon);
+          })(customer));
+        }
+        return _results;
+      }
+    };
+    highlightCustomers = function(customers) {
+      var customer, _i, _len, _results,
+        _this = this;
+      resetMarkers();
+      clearGrid();
+      if (customers != null ? customers.length : void 0) {
+        _results = [];
+        for (_i = 0, _len = customers.length; _i < _len; _i++) {
+          customer = customers[_i];
+          _results.push((function(customer) {
+            var marker;
+            marker = customer != null ? customer.marker : void 0;
+            if (marker != null) marker.setIcon(_this.hlicon);
+            return showInGrid(customer);
+          })(customer));
+        }
+        return _results;
+      }
+    };
     onsearchclick = function(e) {
       var currCustomers, customer, matchCustomers, patt, val;
       val = $('input#search_input').val();
@@ -192,9 +229,9 @@
           return _results;
         })();
         if (matchCustomers != null ? matchCustomers.length : void 0) {
-          return displayCustomers(matchCustomers);
+          return highlightCustomers(matchCustomers);
         } else {
-          return displayCustomers([]);
+          return highlightCustomers([]);
         }
       } else {
         return displayCustomers(getCustomerList());

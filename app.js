@@ -71,6 +71,10 @@
     }
   };
 
+  app.del('/customerremove', restrict, routes.customerdelete);
+
+  app.post('/addcolumn', restrict, routes.addcolumn);
+
   app.get('/defloc', restrict, routes.defaultLocation);
 
   app.get('/accountadd', routes.accountadd);

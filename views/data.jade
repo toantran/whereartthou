@@ -7,37 +7,60 @@
         form#upload-data-form(action='/upload', method='POST', enctype='multipart/form-data')
           input(type='file', name='upload-file')
           input.btn.btn-primary(type='submit', value='Upload')    
-.row  
-  .span12
-    .accordion-heading
-      a.accordion-toggle(href='#',data-toggle='collapse', data-target='#customer_form_container') Enter New Data
-    .accordion-body.collapse#customer_form_container
-      .accordion-inner
-        form#customer-form
-          label Client Name
-          input(type='text', name='customername', placeholder='Client Name', required)
-          label Contact
-          input(type='text', name='customercontact', placeholder='Contact')
-          label Address
-          input(type='text', name='customeraddress', placeholder='Address', required)
-          button.btn.btn-primary(type='submit') Save
+//
+  .row  
+    .span12
+      .accordion-heading
+        a.accordion-toggle(href='#',data-toggle='collapse', data-target='#customer_form_container') Enter New Data
+      .accordion-body.collapse#customer_form_container
+        .accordion-inner
+          form#customer-form
+            label Client Name
+            input(type='text', name='customername', placeholder='Client Name', required)
+            label Contact
+            input(type='text', name='customercontact', placeholder='Contact')
+            label Address
+            input(type='text', name='customeraddress', placeholder='Address', required)
+            button.btn.btn-primary(type='submit') Save
 .row
   .span12
     table.table.table-striped
       thead
         tr
-          td
+          td.header
             .label.label-info #
-          td
-            .label.label-info Client Name
-          td
-            .label.label-info Contact
-          td
-            .label.label-info Address
-          td
-            .label.label-info Additional Info
-          td
-      tbody#customer-list
-        - if (typeof customers != 'undefined')
-          != partial('customer', customers)
+          - each val, key in user.dataschema
+            td.header
+              .label.label-info= key
+          td.header
+            a(href='#', data-toggle='modal', data-target='#newcolumn-dlg', rel='tooltip', title='Add more column').btn.btn-mini.btn-success
+              i.icon-plus.icon-white
+        tr
+          form#customer-form
+            td.header
+            - each val, key in user.dataschema
+              td.header
+                .newdata
+                  input(name=key, type='text', placeholder="Enter #{key}")
+            td.header
+              button(type='submit', rel='tooltip', title='Add client').btn.btn-success.btn-mini Add
+        tbody#customer-list
+          - if (typeof customers != 'undefined')
+            != partial('customer', customers)
+.modal#newcolumn-dlg.hide
+  .modal-header
+    a.close(data-dismiss='modal') x
+    h3 Add new column
+  form#newcolumn-form(action='/addcolumn')
+    .modal-body
+      label Column name
+      input(type='text', name='fieldname', required, placeholder='Enter column name')
+      label Default value
+      input(type='text', name='fielddef')
+      .error-msg
+    .modal-footer
+      a.btn(data-dismiss='modal') Close
+      button(type='submit').btn.btn-primary Submit
 script(type='text/javascript', src='js/data.js')
+script
+  window.schema = !{JSON.stringify(user.dataschema)}

@@ -168,8 +168,14 @@
         return callback('You Chose an Email Address That is Already Registered, You Hacker!');
       } else {
         user.createdat = new Date();
-        if (user.pictureurl == null) user.pictureurl = '/images/player.jpg';
         user.password = hash(user.password, 'a little dog');
+        if (user.dataschema == null) {
+          user.dataschema = {
+            name: 1,
+            contact: 1,
+            address: 1
+          };
+        }
         try {
           return newUserRepo.create(user, cb);
         } catch (e) {
@@ -293,6 +299,29 @@
     updateObj = {
       $set: {
         password: encryptedPassword,
+        updatedat: new Date()
+      }
+    };
+    try {
+      return newUserRepo.update(findObj, updateObj, {}, callback);
+    } catch (e) {
+      console.trace(e);
+      return callback(e);
+    }
+  };
+
+  exports.setSchema = function(userid, schema, callback) {
+    var findObj, updateObj;
+    if (callback == null) callback = function() {};
+    console.assert(userid, 'userid cannot be null');
+    if (!((userid != null) && userid)) throw 'userid cannot be null';
+    if (typeof userid === 'string') userid = new newUserRepo.ObjectId(userid);
+    findObj = {
+      _id: userid
+    };
+    updateObj = {
+      $set: {
+        dataschema: schema,
         updatedat: new Date()
       }
     };

@@ -1,6 +1,38 @@
 repo = require '../repository/customers'
 
 
+exports.remove = (id, callback = ->) ->
+  console.assert id, 'customerid cannot be null or 0'  
+  throw 'customerid is null or empty' unless id?
+  
+  id = new repo.ObjectId(id) if typeof id is 'string'
+  
+  try
+    repo.remove {_id: id}, callback
+  catch e
+    console.trace e
+    callback e
+    
+
+exports.setDefVal = (userid, setdata, callback = ->) ->
+  console.assert userid, 'userid cannot be null or 0'  
+  throw 'userid is null or empty' unless userid?
+  
+  setdata ?= {}
+  setdata.updatedat = new Date()
+  
+  userid = new repo.ObjectId(userid) if typeof userid is 'string'
+  findObj = 
+    userid: userid
+  updateObj =
+    $set: setdata
+  try
+    repo.update findObj, updateObj, {multi: true}, callback        
+  catch e
+    console.trace e
+    callback e  
+
+
 exports.add = (customer, callback = ->) ->
   console.assert customer, 'customer cannot be null or 0'  
   throw 'customer is null or empty' unless customer? 
@@ -50,7 +82,6 @@ exports.getAll = (userid, filter, callback = ->) ->
           customers?.sort (c1, c2) ->
             if c1?.name < c2?.name then -1 else 1
             
-          db = cursor.db
           callback.apply null, [toarrayerr, customers]
           cursor.close()
       else

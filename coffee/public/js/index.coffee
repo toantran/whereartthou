@@ -111,7 +111,8 @@ jQuery ($) ->
     @map = new google.maps.Map( document.getElementById("map_canvas"), mapOptions )
     @geo = new google.maps.Geocoder()
     @icon = new google.maps.MarkerImage('/images/mapslt.png', new google.maps.Size(9,9), new google.maps.Point(138, 227))
-    @hlicon = new google.maps.MarkerImage('/images/m3.png')        
+    @hlicon = new google.maps.MarkerImage('/images/red_markers_A_J2.png', new google.maps.Size(20,34), new google.maps.Point(0, 340))        
+    @hlshadow = new google.maps.MarkerImage('/images/shadow50.png', new google.maps.Size(37,34), new google.maps.Point(0, 0))
     @infoWindow = new google.maps.InfoWindow()
     loadDefaultLocation()
     loadCustomers()
@@ -147,7 +148,29 @@ jQuery ($) ->
   
   getCustomerList = ->
     @customers
+            
   
+  resetMarkers = ->
+    if @customers?.length
+      for customer in @customers
+        do (customer) =>
+          marker = customer?.marker
+          if marker?
+            marker.setIcon @icon
+    
+  
+  highlightCustomers = (customers) ->
+    resetMarkers()
+    clearGrid()
+    if customers?.length
+      for customer in customers
+        do (customer) =>
+          marker = customer?.marker
+          if marker?
+            marker.setIcon @hlicon
+          showInGrid customer
+    
+    
   
   onsearchclick = (e) ->    
     val = $('input#search_input').val()
@@ -156,9 +179,9 @@ jQuery ($) ->
       currCustomers = getCustomerList()
       matchCustomers = (customer for customer in currCustomers when patt.test(customer.name) or patt.test(customer.address) or patt.test(customer.contact))
       if matchCustomers?.length
-        displayCustomers matchCustomers
+        highlightCustomers matchCustomers
       else
-        displayCustomers []
+        highlightCustomers []
     else
       displayCustomers getCustomerList()
     

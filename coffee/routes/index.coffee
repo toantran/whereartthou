@@ -1,3 +1,73 @@
+
+
+exports.addcolumn = (req, res, next) ->
+  fieldname = req.param 'fieldname', ''
+  fielddef = req.param 'fielddef', ''
+  
+  if fieldname 
+    schema = req.user?.dataschema ? {name: 1, contact: 1, address: 1}
+    schema[fieldname] = 1
+    user = req.user
+    user.dataschema = schema
+    
+    userSvc = require '../services/user'
+    try
+      userSvc.setSchema req.user._id, schema, (err, saveduser) ->
+        req.session?.regenerate ->
+          req.session.user = user
+          
+          if fielddef
+            customersvc = require '../services/customer'
+            obj = {}
+            obj[fieldname] = fielddef
+            customersvc.setDefVal user._id, obj, ->
+              res.send
+                success: !!!(err)
+                error: err
+                dataschema: schema
+          else
+            res.send
+              success: !!!(err)
+              error: err
+              dataschema: schema
+    catch e
+      console.trace e
+      res.send
+        success: false
+        error: e
+  else
+    res.send
+      success: false
+      error: 'field name cannot be empty'
+
+
+exports.dataschema = (req, res, next) ->
+  if req.user?.dataschema?
+    res.send
+      success: true
+      dataschema: req.user.dataschema
+  else
+    userSvc = require '../services/user'
+    try
+      userSvc.getById req.user._id, (err, user) ->
+        if user?.dataschema?
+          req.session?.regenerate ->
+            req.session.user = user
+          res.send
+            success: true
+            dataschema: req.user.dataschema
+        else
+          user?.dataschema = 
+            name: 1
+            contact: 1
+            address: 1
+    catch e
+      console.trace e
+      res.send
+        success: false
+        error: e
+
+
 exports.defaultLocation = (req, res, next) ->
   userSvc = require '../services/user'
   
@@ -51,15 +121,35 @@ exports.createaccount = (req, res, next) ->
     res.redirect 'back'
     
 
+exports.customerdelete = (req, res, next) ->
+  customersvc = require '../services/customer'
+  customerid = req.param 'id', ''
+  
+  if customerid
+    customersvc.remove customerid, (err) ->
+      res.send
+        success: !!!(err)
+        error: err
+  else
+    res.send
+      success: false
+      error: 'customerid is empty'
+
+
 exports.customeradd = (req, res, next) ->
   customersvc = require '../services/customer'
   
-  customername = req.param 'customername', ''
-  customercontact = req.param 'customercontact', ''
-  customeraddress = req.param 'customeraddress', ''
+  data = {}
+  data[key] = value for own key,value of req.user?.dataschema
+  
+  data[key] = req.body[key] for key, val of data    
+  
+  data.userid = req.user._id
+  
+  console.log data
   
   try
-    customersvc.add {name:customername, contact: customercontact, address:customeraddress, userid: req.user._id}, (err, customer) ->
+    customersvc.add data, (err, customer) ->
       res.send
         success: !!! (err)
         customer: customer
@@ -70,12 +160,15 @@ exports.customeradd = (req, res, next) ->
 
 exports.data = (req, res, next) ->
   customersvc = require '../services/customer'
+  usersvc = require '../services/user'
+  utils = require '../services/utils'
   
   try
     customersvc.getAll req.user._id, '', (err, customers) ->
       res.render 'data'
         title: 'Where Art Thou - Data'
         customers: customers
+        user: req.user
         layout: true
   catch e
     console.trace e

@@ -4,7 +4,7 @@ jQuery ($) ->
   global = makethis.call()
   global.setActiveMenu 1
   
-  formsubmit = ->
+  customerformsubmit = ->
     formdata = {}
     form = $(@)
     
@@ -15,12 +15,10 @@ jQuery ($) ->
     $.post('customeradd', formdata)
     .success (data) ->
       if data?.success
-        el = $.el('tr', {}, [
+        cols = ( $.el( 'td', {}, [data?.customer[key]] ) for key, value of window.schema )
+        el = $.el('tr', {'data-customerid': data?.customer?._id}, [
           $.el('td', {}, [ $.el('div.label.label-success', {}, ['new']) ]),
-          $.el('td', {}, [ data?.customer?.name]),
-          $.el('td', {}, [ data?.customer?.contact]),
-          $.el('td', {}, [ data?.customer?.address]),
-          $.el('td', {}, ['']),
+          cols,
           $.el('td', {}, [''])
         ])
         
@@ -30,7 +28,7 @@ jQuery ($) ->
     
     return false
   
-  $('form#customer-form').on 'submit', formsubmit
+  $('form#customer-form').on 'submit', customerformsubmit
   
   $(':file').change ->
     file = @files?[0]
@@ -64,6 +62,45 @@ jQuery ($) ->
     false
     
     
+  $('form#newcolumn-form').on 'submit', ->
+    formdata = {}
+    form = $(@)
     
+    for item in $(@).serializeArray()
+      do (item) ->
+        formdata[item.name] = item.value
+  
+    $.post('/addcolumn', formdata)
+    .success (data) ->
+      if data?.success
+        window.location.href = window.location.href
+      else
+        $(form).find('.error-msg').val data?.error
+        $(form).find('.error-msg').alert()
+    .error ->
+      
+    false
+    
+    
+  removeCustomer = (id, callback = ->) ->
+    $.ajax '/customerremove',
+      type: 'DELETE'
+      data: 
+        id: id
+      success: (data) ->
+        callback null
+      error: ->
+        callback 'error'
+      
+    
+  
+  $('#customer-list').on 'click', (e)->
+    target = $(e.target).closest('.customer-remove')
+    if target
+      e.stopPropagation()
+      id =$(target).closest('tr').attr 'data-customerid'
+      removeCustomer id, (err) ->
+        if not err
+          $(target).closest('tr').remove()
     
     

@@ -1,7 +1,9 @@
-tr
+tr(data-customerid='#{customer._id}')
   td= indexInCollection + 1
-  td= customer.name
-  td= customer.contact
-  td= customer.address
+  - each val, key in user.dataschema
+    td!= customer[key]
+      a(href='#', rel='tooltip', title='edit...').edit-tool
+        .edit-icon
   td
-  td
+    a.btn.btn-mini.btn-danger.customer-remove(href='#', rel='tooltip', title='Remove client')
+      i.icon-remove.icon-white

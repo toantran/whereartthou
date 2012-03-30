@@ -137,8 +137,8 @@ exports.insert = (user, callback = ->) ->
       callback 'You Chose an Email Address That is Already Registered, You Hacker!'
     else
       user.createdat = new Date()
-      user.pictureurl ?= '/images/player.jpg'
       user.password = hash user.password, 'a little dog'
+      user.dataschema ?= name: 1, contact: 1, address: 1
       try 
         newUserRepo.create user, cb
       catch e
@@ -242,6 +242,27 @@ exports.setPassword = (userid, password, callback = ->) ->
   catch e
     console.trace e
     callback e  
+    
+
+    
+exports.setSchema = (userid, schema, callback = ->) ->
+  console.assert userid, 'userid cannot be null'
+  throw 'userid cannot be null' unless userid? and userid
+    
+  userid = new newUserRepo.ObjectId( userid ) if typeof userid is 'string'
+  
+  findObj = _id : userid
+  updateObj = 
+    $set: 
+      dataschema: schema
+      updatedat: new Date()
+  
+  try
+    newUserRepo.update findObj, updateObj, {}, callback  
+  catch e
+    console.trace e
+    callback e  
+    
     
     
 exports.assignTeam = (userid, team, callback = ->) ->
